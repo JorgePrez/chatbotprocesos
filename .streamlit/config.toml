@@ -1,0 +1,10 @@
+#[browser]
+#showSidebarNavigation = false  # Oculta el menú lateral (opcional), esto se hace por un 
+[server]
+enableXsrfProtection = false
+enableCORS = false
+
+[theme]
+base = "dark"
+#base = "light"
+

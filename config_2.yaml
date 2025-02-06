@@ -1,0 +1,134 @@
+cookie:
+  expiry_days: 30
+  key: some_signature_key
+  name: id_usuario
+credentials:
+  usernames:
+    perezjorge:
+      email: operezjorge@gmail.com
+      first_name: Jorge
+      last_name: Perez
+      logged_in: false
+      password: $2b$12$NMs8FjlnvnsIHTYO8GQDu.o36qzNwkkGTl94f/FCExKzbgz8rMQRC
+      password_hint: password_hint
+      roles: null
+    usuario_pruebas1:
+      email: usuario_pruebas1@gmail.com
+      failed_login_attempts: 0
+      first_name: Usuario
+      id_usar: id_loco
+      last_name: Pruebas1
+      logged_in: false
+      password: $2b$12$keRAkEPKxQcH8j6CpvKw5.fwFXJmb9pKqaY5OeNW.Nd8gGJwsbkYK
+      roles:
+      - admin
+      - editor
+      - viewer
+    usuario_pruebas2:
+      email: usuario_pruebas2@gmail.com
+      failed_login_attempts: 0
+      first_name: Usuario
+      id_usar: id_loco2
+      last_name: Pruebas2
+      logged_in: false
+      password: $2b$12$cMDShWZgMMKWc.H4qOgave4iUCdXqWn8k34QyOa2CV/pH4Rp/lq5C
+      roles:
+      - admin
+      - editor
+      - viewer
+    usuario_pruebas3:
+      email: usuario_pruebas3@gmail.com
+      failed_login_attempts: 0
+      first_name: Usuario
+      id_usar: id_loco3
+      last_name: Pruebas3
+      logged_in: false
+      password: $2b$12$08yHbvQKa5J1n13ZjT9iq.ABiGTn6tG5sfsnXAWv7Zo7x5HdRYxQ6
+      roles:
+      - admin
+      - editor
+      - viewer
+  usuario_pruebas10:
+    email: usuario_pruebas10@gmail.com
+    failed_login_attempts: 0
+    first_name: Usuario
+    id_usar: id_loco10
+    last_name: Pruebas10
+    logged_in: false
+    password: abc
+    roles:
+    - admin
+    - editor
+    - viewer
+  usuario_pruebas4:
+    email: usuario_pruebas4@gmail.com
+    failed_login_attempts: 0
+    first_name: Usuario
+    id_usar: id_loco4
+    last_name: Pruebas4
+    logged_in: false
+    password: abc
+    roles:
+    - admin
+    - editor
+    - viewer
+  usuario_pruebas5:
+    email: usuario_pruebas5@gmail.com
+    failed_login_attempts: 0
+    first_name: Usuario
+    id_usar: id_loco5
+    last_name: Pruebas5
+    logged_in: false
+    password: abc
+    roles:
+    - admin
+    - editor
+    - viewer
+  usuario_pruebas6:
+    email: usuario_pruebas6@gmail.com
+    failed_login_attempts: 0
+    first_name: Usuario
+    id_usar: id_loco6
+    last_name: Pruebas6
+    logged_in: false
+    password: abc
+    roles:
+    - admin
+    - editor
+    - viewer
+  usuario_pruebas7:
+    email: usuario_pruebas7@gmail.com
+    failed_login_attempts: 0
+    first_name: Usuario
+    id_usar: id_loco7
+    last_name: Pruebas7
+    logged_in: false
+    password: abc
+    roles:
+    - admin
+    - editor
+    - viewer
+  usuario_pruebas8:
+    email: usuario_pruebas8@gmail.com
+    failed_login_attempts: 0
+    first_name: Usuario
+    id_usar: id_loco8
+    last_name: Pruebas8
+    logged_in: false
+    password: abc
+    roles:
+    - admin
+    - editor
+    - viewer
+  usuario_pruebas9:
+    email: usuario_pruebas9@gmail.com
+    failed_login_attempts: 0
+    first_name: Usuario
+    id_usar: id_loco9
+    last_name: Pruebas9
+    logged_in: false
+    password: abc
+    roles:
+    - admin
+    - editor
+    - viewer
