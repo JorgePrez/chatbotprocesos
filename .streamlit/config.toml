@@ -3,6 +3,7 @@
 [server]
 enableXsrfProtection = false
 enableCORS = false
+#gatherUsageStats = false
 
 [theme]
 base = "dark"
