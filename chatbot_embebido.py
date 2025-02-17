@@ -23,7 +23,19 @@ import requests
 from collections import defaultdict
 from langchain.schema import Document  # Asegúrate de importar Document si es necesario
 from dotenv import load_dotenv
+from langsmith import traceable
+from langsmith import Client
 
+
+from langsmith.run_helpers import get_current_run_tree
+
+
+# Cargar variables de entorno
+load_dotenv()
+
+
+
+client = Client()
 
 class Citation(BaseModel):
     page_content: str
@@ -347,6 +359,8 @@ def invoke_with_retries6(chain, prompt, history, config, max_retries=10):
                         
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
                 warning_placeholder.empty()  # Limpiar el mensaje de espera cuando termine exitosamente
+
+                
                 return  # Si la llamada es exitosa, salir de la función
 
         except botocore.exceptions.BotoCoreError as e:
@@ -570,10 +584,17 @@ def main():
 
 
     SYSTEM_PROMPT = (f"""
-
-## Base de conocimientos:
+                     
+## Base de conocimientos (solo puedes responder con esta información):
 
 {{context}}
+
+- Debes **responder estrictamente con la información contenida en el contexto recuperado (`context`)**.
+- **NO generes información que no esté explícitamente en `context`**.
+- **NO inventes procesos, códigos, ni nombres de procesos**. Si un usuario pregunta sobre un proceso que **no está en el contexto, responde que no hay información disponible**.
+- Si `context` está vacío o no contiene procesos relevantes, responde:  
+  **"No se encontró información relevante sobre este proceso en la documentación proporcionada."**
+                     
 
 ## Instrucciones:
 
@@ -585,9 +606,18 @@ El publico objetivo es personal de la universidad, catedráticos, profesores, pe
 
 Siempre que recibas una consulta, debes hacer **preguntas de aclaración** solicitando más contexto y proporcionando una lista de los posibles procesos relacionados con la consulta, **ordenados por prioridad de mayor a menor relación con el proceso (score), es decir que pueda encajar con un grado entre 0 y 1 de correlación con la temática preguntada**. Usa la aproximación para ello. La estructura de la respuesta inicial será la siguiente:
 
-1. **Preguntas de aclaración:** Haz preguntas (por ejemplo si sabe el departamento al que pertenece el proceso, o preguntar al usurio que de más detalle sobree lo qué quiere realizar ) para pedir más detalles o confirmar el proceso específico que el usuario desea obtener. 
+1. **Preguntas de aclaración:** Haz preguntas (por ejemplo si sabe el departamento al que pertenece el proceso, o preguntar al usuario que de más detalles sobre lo qué quiere realizar ) para pedir más detalles o confirmar el proceso específico que el usuario desea obtener. 
 
-2. **Lista de procesos relacionados:** Muestra una lista de procesos relacionados con la consulta. La lista debe estar **ordenada por prioridad** de mayor a menor, basándote en la relevancia de los procesos para la consulta recibida. Usa el siguiente formato:
+2. **Lista de procesos relacionados:** Muestra una lista de procesos relacionados con la consulta **únicamente** si están presentes en el `context`. 
+- **Solo menciona procesos que aparecen exactamente en `context`.**
+- **NO debes generar procesos que no se encuentren en `context`.**
+- **NO inventes códigos de procesos ni hagas suposiciones sobre su existencia.**
+- **NO asumas que existen otros procesos si no están explícitamente en `context`.**
+- **Si el usuario pregunta por un proceso que no está en `context`, responde directamente que no tienes información. NO intentes sugerir procesos similares de otras áreas.**
+- **Si el `context` no contiene procesos relacionados con la consulta del usuario, responde:**
+  **"No se encontraron procesos relacionados con tu consulta en la documentación proporcionada."**
+- La lista debe estar **ordenada por prioridad** de mayor a menor, basándote en la relevancia de los procesos dentro del `context`.
+- Usa el siguiente formato para cada proceso encontrado en `context`:
    - **Nombre del proceso (código del proceso)**
    - Repite este formato para cada proceso relevante.
 
@@ -636,7 +666,7 @@ Cuando el usuario confirme el proceso que desea conocer, sigue estrictamente los
 - Si el proceso está dividido en varios fragmentos o "chunks", debes combinar toda la información relacionada con el código del proceso antes de generar la respuesta.
 - Usa el **código del proceso** para identificar y concatenar todos los fragmentos que pertenezcan al mismo proceso, proporcionando una explicación completa sin omitir ningún paso, tiempo, no negociable o participante, incluso si están en diferentes *chunks* o fragmentos.
 
-## Listado Completo por Unidad ##
+## Listado Completo por Unidad
 Si el usuario solicita ver un listado completo de los procesos de una unidad, responde con el siguiente formato:
 
 1. **Listado Completo de Procesos:**
@@ -651,17 +681,19 @@ Si el usuario solicita ver un listado completo de los procesos de una unidad, re
 
    **Nota:** Si no se encuentran procesos para la unidad solicitada, responde: 'No se encontraron procesos para la unidad'
 
-## Manejo de Consultas sin Información Relevante
-- Si no hay procesos disponibles en el contexto (base de conocimientos) que coincidan con la consulta, responde de manera clara explicando que no existe información disponible:
-  'Lo siento, no se encontró información relevante para tu consulta en el contexto proporcionado.'
+## Manejo de Consultas sin Información Relevante:
+- **Si el usuario pregunta por un proceso que no está en `context`, responde sin inventar información.**
+- **NO generes respuestas basadas en conocimiento previo o inferencias si la información no está en `context`.**
+- **Si `context` está vacío o no contiene procesos relevantes para la consulta del usuario, responde con:**
+  **"No se encontró información relevante sobre este proceso en la documentación proporcionada."**
+- **NO intentes reformular la consulta ni sugerir procesos fuera del contexto recuperado.**
 
 ## Manejo de Respuestas Cortas 
 - Si la consulta solo requiere un enlace o un dato específico (nombre o código de proceso), proporciona únicamente esa información sin desglosar todos los pasos.
-        
     """
     )
     
-   # st.markdown(SYSTEM_PROMPT)
+    #st.markdown(SYSTEM_PROMPT)
 
     #Enviar prompt con unidades desde este punto. 
     chain_with_history = create_chain_with_history(retriever,SYSTEM_PROMPT)
