@@ -26,15 +26,6 @@ from dotenv import load_dotenv
 from langsmith import traceable
 from langsmith import Client
 
-#from streamlit_feedback import streamlit_feedback
-
-from langsmith.run_helpers import get_current_run_tree
-
-from streamlit_feedback import streamlit_feedback
-
-from langchain.callbacks import collect_runs
-
-
 
 from langsmith.run_helpers import get_current_run_tree
 
@@ -45,7 +36,6 @@ load_dotenv()
 
 
 client = Client()
-
 
 class Citation(BaseModel):
     page_content: str
@@ -155,6 +145,73 @@ def generar_configuracion_retriever_new():
 
 
 
+# Datos quemados para pruebas
+CENTROS_COSTOS_QUEMADOS = [
+    {"NOMBRE_MOSTRAR": "Admisiones", "CODIGO": "ADM", "CENTRO_COSTO": "291", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Atención al estudiante", "CODIGO": "AES", "CENTRO_COSTO": "290", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "CETA", "CODIGO": "CETA", "CENTRO_COSTO": "36", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Clínicas Salud", "CODIGO": "CSM", "CENTRO_COSTO": "503", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "CoLab", "CODIGO": "COLAB", "CENTRO_COSTO": "498", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Contabilidad", "CODIGO": "CON", "CENTRO_COSTO": "11", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Crédito Educativo", "CODIGO": "CE", "CENTRO_COSTO": "182", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Cuenta Corriente", "CODIGO": "CTAC", "CENTRO_COSTO": "366", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Tecnología (IT)", "CODIGO": "IT", "CENTRO_COSTO": "13", "ACTIVO": "N"},
+    {"NOMBRE_MOSTRAR": "Mercadeo", "CODIGO": "MERC", "CENTRO_COSTO": "355", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Publicaciones", "CODIGO": "PU", "CENTRO_COSTO": "228", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Registro", "CODIGO": "REG", "CENTRO_COSTO": "180", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Recursos Humanos", "CODIGO": "RH", "CENTRO_COSTO": "376", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "Tesorería", "CODIGO": "TES", "CENTRO_COSTO": "189", "ACTIVO": "Y"},
+    {"NOMBRE_MOSTRAR": "UFM LABS", "CODIGO": "UFM-LABS", "CENTRO_COSTO": "230", "ACTIVO": "Y"}
+]
+
+
+# Función que genera el texto de unidades inactivas para el prompt
+# Dejo esta función por si fuera necesaria en algún momento
+def generar_texto_unidades_inactivas():
+    inactivas = [
+        f"- {cc['NOMBRE_MOSTRAR']} ({cc['CODIGO']})"
+        for cc in CENTROS_COSTOS_QUEMADOS if cc["ACTIVO"] != "Y"
+    ]
+    
+    if inactivas:
+        texto = "## Unidades inactivas:\n" + "\n".join(inactivas)
+    else:
+        texto = ""  # Si no hay unidades inactivas, el texto es vacío
+    
+    return texto
+
+# Función que genera la configuración completa del retriever de la base de conocimientos
+def generar_configuracion_retriever_quemado():
+
+    activas = [cc["CODIGO"] for cc in CENTROS_COSTOS_QUEMADOS if cc["ACTIVO"] == "Y"]
+        
+    #print(activas)
+
+    # Construir la configuración base
+    config = {
+        "vectorSearchConfiguration": {
+            "numberOfResults": 100  # Máximo 100
+        }
+    }
+
+    # Aplicar filtro solo si hay centros de costos activos
+    if activas:
+        config["vectorSearchConfiguration"]["filter"] = {
+            "in": {
+                "key": "codigo_area",
+                "value": activas
+            }
+        }
+
+    #print(config)
+
+    #texto_unidades_inactivas = generar_texto_unidades_inactivas()
+    #print(texto_unidades_inactivas)
+
+    return config
+
+
+
 
 # Función para recuperar y depurar el contexto
 def obtener_contexto(inputs, retriever):
@@ -219,6 +276,7 @@ def crear_context_pipeline(retriever):
 table_name = "SessionTable"
 
 
+
 # Función para crear el prompt dinámico
 def create_prompt_template(system_prompt):
     return ChatPromptTemplate.from_messages(
@@ -259,6 +317,13 @@ def create_chain_with_history(retriever,system_prompt):
     )
 
 
+#{mensaje_areas} 
+
+# Función para limpiar historial de chat
+#def clear_chat_history():
+    #st.session_state.messages = [{"role": "assistant", "content": f"Soy tu asistente sobre procesos de la UFM,{descripcion_chatbot }"}]
+
+
 # Función para manejar errores de Bedrock, aqui se busca que se vuelve a repetir la consulta
 def handle_error(error):
     st.error("Ocurrió un problema. Por favor, repite tu consulta.")
@@ -289,10 +354,13 @@ def invoke_with_retries6(chain, prompt, history, config, max_retries=10):
                         response_placeholder.markdown(full_response)
                     else:
                         full_context = chunk['context']
-                response_placeholder.markdown(full_response) 
-                                        
+                response_placeholder.markdown(full_response) #full_response
+                ##print(full_context)
+                        
                 st.session_state.messages.append({"role": "assistant", "content": full_response})
                 warning_placeholder.empty()  # Limpiar el mensaje de espera cuando termine exitosamente
+
+                
                 return  # Si la llamada es exitosa, salir de la función
 
         except botocore.exceptions.BotoCoreError as e:
@@ -326,9 +394,6 @@ def invoke_with_retries6(chain, prompt, history, config, max_retries=10):
                 )
 
 
-feedback_option = "faces"  # Puede cambiarse a "thumbs" si se requiere
-
-
 # Modificar la función main para usar la lógica de reintento
 def main():
 
@@ -354,10 +419,13 @@ def main():
 )
 
     #### El session_id es lo que chat se le cargará al usuario
+
+    #query_params = st.experimental_get_query_params()  # Para versiones anteriores
+    #user_id = query_params.get("user_id", [""])[0]  # Extraer el usuario
     query_params = st.query_params  # Para versiones recientes
-    user_id =  query_params.get("user_id", "") #"langsmithfeedbackprueba@gmail.com"  #query_params.get("user_id", "")
-    persona_id =  query_params.get("id_persona", "")#"101964"
-    servidor = query_params.get("url_request","") #"C"  
+    user_id = query_params.get("user_id", "")
+    persona_id = query_params.get("id_persona", "")
+    servidor = query_params.get("url_request","")
 
 
     #st.write(user_id)
@@ -366,7 +434,12 @@ def main():
         st.session_state.persona_id = persona_id  # Guardarlo en la sesión
         st.session_state.servidor = servidor
 
+        #st.write(f"Bienvenido, usuario: {user_id}")
         st.success(f"Usuario: {st.session_state.session_id}")
+        #st.success(f"Persona: {st.session_state.persona_id}")
+        #st.success(f"Servidor {st.session_state.servidor}")
+
+        ## Hacer el post de streamlit, se debe enviar el id de la persona
 
         api_url = "https://compras135.ufm.edu/repositorio_procesos_api.php"
 
@@ -392,12 +465,23 @@ def main():
         with st.spinner("Obteniendo centros de costos..."):
             response = requests.post(api_url, data=payload, headers=headers)
 
-  
+        # Mostrar respuesta
+       # Verificar respuesta
         if response.status_code == 200:
             data = response.json()  # Convertir la respuesta en JSON
 
             # Guardar el JSON completo de los permisos en `st.session_state`
             st.session_state.centros_costos = data  
+            ##st.write(data)
+
+            # Filtrar solo los que tienen "ACTIVO": "Y"
+            #centros_activos = [item["NOMBRE_MOSTRAR"] for item in data if item["ACTIVO"] == "Y"]
+
+            # Mostrar mensaje solo si hay centros activos
+            #if centros_activos:
+            #    st.markdown("### Puedes consultar procesos de las siguientes unidades:")
+            #    for nombre in centros_activos:
+            #        st.write(f"- {nombre}")
 
         else:
             st.error(f"⚠️ Acceso denegado: {response.status_code}")
@@ -405,20 +489,37 @@ def main():
             st.stop()
 
 
-    else:
+        #st.write(centros_costos)
+        
+        #st.sidebar.success(f"Usuario: {st.session_state.username}")
 
+
+    else:
+       # st.write("Sin identificador de usuario.")   
+        #st.error("⚠️ No se proporcionó un identificador de usuario. Acceso denegado.")
         st.error("⚠️ Acceso denegado.")
         st.stop()  # Detiene la ejecución de Streamlit
 
-    
+    #session_id = "pruebascompras@gmail.com" #st.session_state.username 
+
+    #session_id = "user123"  # Importante se necesita que cada usuario tenga un identificador único, sería útil colocar algún identificador
     history = DynamoDBChatMessageHistory(table_name=table_name, session_id=session_id)
 
     
+
+     # Verificar si hay datos en `st.session_state.centros_costos`
+
      
     if "centros_costos" in st.session_state and st.session_state.centros_costos:
         # Filtrar solo los centros que tienen "ACTIVO": "Y"
         centros_activos = [item["NOMBRE_MOSTRAR"] for item in st.session_state.centros_costos if item["ACTIVO"] == "Y"]
 
+        #centros_activos_quemados = [item["NOMBRE_MOSTRAR"] for item in CENTROS_COSTOS_QUEMADOS if item["ACTIVO"] == "Y"]
+        #    activas = [cc["CODIGO"] for cc in CENTROS_COSTOS_QUEMADOS if cc["ACTIVO"] == "Y"]
+
+
+
+        # Construir la lista de centros activos o mensaje si no hay unidades
         centros_texto = "\n".join([f"- {nombre}" for nombre in centros_activos]) if centros_activos else "No tienes áreas disponibles."
     
     else:
@@ -458,12 +559,27 @@ def main():
             role = "user" if msg.__class__.__name__ == "HumanMessage" else "assistant"
             st.session_state.messages.append({"role": role, "content": msg.content})
 
+    streaming_on = True
 
+    # Botón para eliminar contenido de la pantalla
+   # st.sidebar.button('Limpiar pantalla', on_click=clear_chat_history)
+    ## deberia eliminar historial
+
+   # st.sidebar.button("Logout", on_click=st.session_state.clear())
+       # st.session_state.clear()  # Limpia todas las variables de sesión
+           # st.experimental_rerun()  # Reinicia la aplicación para reflejar cambios
+    
+
+   ## st.divider()
+
+   # Crear el retriever con la configuración generada
     retriever = AmazonKnowledgeBasesRetriever(
     knowledge_base_id="I9HQYMMI4A",
     retrieval_config=generar_configuracion_retriever_new()
     )
 
+
+    #listado_unidades_inactivas=generar_texto_unidades_inactivas()
 
 
 
@@ -577,70 +693,28 @@ Si el usuario solicita ver un listado completo de los procesos de una unidad, re
 
     """
     )
+    
+    #st.markdown(SYSTEM_PROMPT)
 
-
+    #Enviar prompt con unidades desde este punto. 
     chain_with_history = create_chain_with_history(retriever,SYSTEM_PROMPT)
 
+    ##st.write(SYSTEM_PROMPT_JOIN)
 
-    # Mostrar historial de conversación
-    for i, message in enumerate(st.session_state.messages):
+    for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.write(message["content"])
 
-            # Mostrar feedback solo para respuestas del asistente
-            if message["role"] == "assistant" and "run_id" in message:
-                feedback_result = streamlit_feedback(
-                    feedback_type=feedback_option,
-                    optional_text_label="[Opcional] Comentarios adicionales",
-                    key=f"feedback_{message['run_id']}",
-                )
-
-                # Guardar feedback en session_state y LangSmith
-                if feedback_result and "score" in feedback_result:
-                    message["feedback"] = feedback_result["score"]
-
-                    # Mapeo de puntuaciones
-                    score_mappings = {
-                        "thumbs": {"👍": 1, "👎": 0},
-                        "faces": {"😀": 1, "🙂": 0.75, "😐": 0.5, "🙁": 0.25, "😞": 0},
-                    }
-                    score = score_mappings[feedback_option].get(feedback_result["score"])
-
-                    if score is not None:
-                        try:
-                            feedback_type_str = f"{feedback_option} {feedback_result['score']}"
-                            feedback_record = client.create_feedback(
-                                message["run_id"],
-                                feedback_type_str,
-                                score=score,
-                                comment=feedback_result.get("text"),
-                            )
-                            message["feedback_id"] = str(feedback_record.id)
-                            st.success("✅ Feedback registrado correctamente.")
-                        except Exception as e:
-                            st.error(f"❌ Error al enviar feedback: {e}")
-
-    # Capturar input del usuario
     if prompt := st.chat_input("Escribe tu mensaje aquí..."):
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.write(prompt)
 
-        config = {"configurable": {"session_id": session_id}}
+        config = {"configurable": {"session_id": session_id}}  
 
-        # Capturar el run_id con collect_runs()
-        with collect_runs() as cb:
+
+        if streaming_on:
             invoke_with_retries6(chain_with_history, prompt, st.session_state.messages, config)
-
-            # Guardar el run_id generado en la respuesta del asistente
-            if cb.traced_runs:
-                run_id = cb.traced_runs[0].id
-            else:
-                run_id = None
-
-        # Obtener la última respuesta del asistente y añadir el run_id
-        if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
-            st.session_state.messages[-1]["run_id"] = run_id
 
 
 
