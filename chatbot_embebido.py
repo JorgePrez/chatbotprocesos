@@ -267,63 +267,57 @@ def handle_error(error):
 
 ###################################################################################################
 
-
-# Función para manejar errores de Bedrock y reintentar la llamada
-def invoke_with_retries6(chain, prompt, history, config, max_retries=10):
+def invoke_with_retriesnew(chain, prompt, history, config, max_retries=10):
     attempt = 0
-    warning_placeholder = st.empty()  # Marcador de posición para mostrar un solo mensaje de advertencia
+    warning_placeholder = st.empty()  # Placeholder para mensajes de advertencia
+    response_placeholder = st.empty()  # Placeholder para la respuesta del asistente
+    run_id = None  # Inicializar el run_id
 
-    # Contenedor para la respuesta del asistente
-    response_placeholder = st.empty()
-    
     while attempt < max_retries:
         try:
-            # Imprimir en la consola el mensaje de reintento
-            print(f"Reintento {attempt + 1} de {max_retries}")
+            print(f"Reintento {attempt + 1} de {max_retries}")  # Log en consola
 
-            with response_placeholder.container():  # Usar el mismo contenedor para la respuesta del asistente
+            with response_placeholder.container():
                 full_response = ''
-                for chunk in chain.stream({"question": prompt, "history": history}, config):
-                    if 'response' in chunk:
-                        full_response += chunk['response']
-                        response_placeholder.markdown(full_response)
-                    else:
-                        full_context = chunk['context']
-                response_placeholder.markdown(full_response) 
-                                        
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
-                warning_placeholder.empty()  # Limpiar el mensaje de espera cuando termine exitosamente
-                return  # Si la llamada es exitosa, salir de la función
+
+                # Capturar el run_id solo del intento exitoso
+                with collect_runs() as cb:
+                    for chunk in chain.stream({"question": prompt, "history": history}, config):
+                        if 'response' in chunk:
+                            full_response += chunk['response']
+                            response_placeholder.markdown(full_response)
+                        else:
+                            full_context = chunk['context']
+
+                # Si la ejecución fue exitosa, obtener el run_id
+                if cb.traced_runs:
+                    run_id = cb.traced_runs[0].id
+
+                # Guardar respuesta del asistente en el historial
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": full_response,
+                    "run_id": run_id  # Guardamos el run_id correcto
+                })
+
+                warning_placeholder.empty()  # Limpiar el mensaje de espera
+                return  # Salir exitosamente de la función
 
         except botocore.exceptions.BotoCoreError as e:
             attempt += 1
-
-            if attempt == 1:  # Solo mostrar la primera vez que se hace un reintento
-                warning_placeholder.markdown(
-                    "⌛ Esperando generación de respuesta...",
-                    unsafe_allow_html=True
-                )
-            
-            print(f"Error en reintento {attempt} de {max_retries}: {str(e)}")  # Imprimir en consola
+            if attempt == 1:
+                warning_placeholder.markdown("⌛ Esperando generación de respuesta...")
+            print(f"Error en reintento {attempt}: {str(e)}")
             if attempt == max_retries:
-                warning_placeholder.markdown(
-                    "⚠️ **No fue posible generar la respuesta, vuelve a ingresar tu consulta.**",
-                    unsafe_allow_html=True
-                )
+                warning_placeholder.markdown("⚠️ No fue posible generar la respuesta.")
+
         except Exception as e:
             attempt += 1
-
-            if attempt == 1:  # Solo mostrar la primera vez que se hace un reintento
-                warning_placeholder.markdown(
-                    "⌛ Esperando generación de respuesta...",
-                    unsafe_allow_html=True
-                )
-            print(f"Error inesperado en reintento {attempt} de {max_retries}: {str(e)}")  # Imprimir en consola
+            if attempt == 1:
+                warning_placeholder.markdown("⌛ Esperando generación de respuesta...")
+            print(f"Error inesperado en reintento {attempt}: {str(e)}")
             if attempt == max_retries:
-                warning_placeholder.markdown(
-                    "⚠️ **No fue posible generar la respuesta, vuelve a ingresar tu consulta.**",
-                    unsafe_allow_html=True
-                )
+                warning_placeholder.markdown("⚠️ No fue posible generar la respuesta.")
 
 
 feedback_option = "faces"  # Puede cambiarse a "thumbs" si se requiere
@@ -588,7 +582,7 @@ Si el usuario solicita ver un listado completo de los procesos de una unidad, re
             st.write(message["content"])
 
             # Mostrar feedback solo para respuestas del asistente
-            if message["role"] == "assistant" and "run_id" in message:
+            if message["role"] == "assistant" and "run_id" in message and message["run_id"]:
                 feedback_result = streamlit_feedback(
                     feedback_type=feedback_option,
                     optional_text_label="[Opcional] Comentarios adicionales",
@@ -629,18 +623,18 @@ Si el usuario solicita ver un listado completo de los procesos de una unidad, re
         config = {"configurable": {"session_id": session_id}}
 
         # Capturar el run_id con collect_runs()
-        with collect_runs() as cb:
-            invoke_with_retries6(chain_with_history, prompt, st.session_state.messages, config)
+        #with collect_runs() as cb:
+        invoke_with_retriesnew(chain_with_history, prompt, st.session_state.messages, config)
 
             # Guardar el run_id generado en la respuesta del asistente
-            if cb.traced_runs:
-                run_id = cb.traced_runs[0].id
-            else:
-                run_id = None
+       #     if cb.traced_runs:
+       #         run_id = cb.traced_runs[0].id
+       #     else:
+       #         run_id = None
 
         # Obtener la última respuesta del asistente y añadir el run_id
-        if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
-            st.session_state.messages[-1]["run_id"] = run_id
+       # if st.session_state.messages and st.session_state.messages[-1]["role"] == "assistant":
+       #     st.session_state.messages[-1]["run_id"] = run_id
 
 
 
