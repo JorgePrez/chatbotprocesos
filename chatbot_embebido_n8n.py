@@ -625,7 +625,7 @@ Si el usuario solicita ver un listado completo de los procesos de una unidad, re
         # Capturar el run_id con collect_runs()
         #with collect_runs() as cb:
         invoke_with_retriesnew(chain_with_history, prompt, st.session_state.messages, config)
-
+########
             # Guardar el run_id generado en la respuesta del asistente
        #     if cb.traced_runs:
        #         run_id = cb.traced_runs[0].id
