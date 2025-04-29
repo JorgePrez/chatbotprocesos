@@ -1,5 +1,5 @@
 #################################
-
+#####
 import boto3
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableParallel
@@ -83,6 +83,8 @@ bedrock_runtime = boto3.client("bedrock-runtime", region_name="us-east-1")
 #TODO: model ID
 
 model_id = "anthropic.claude-3-haiku-20240307-v1:0"
+model_id ="anthropic.claude-3-7-sonnet-20250219-v1:0"
+
 # An error occurred (ThrottlingException) when calling the InvokeModelWithResponseStream operation (reached max retries: 4): Too many tokens, please wait before trying again.
 #model_id="anthropic.claude-3-sonnet-20240229-v1:0" ##Por ejemplo este es más tardado
 #model_id="anthropic.claude-3-5-haiku-20241022-v1:0" ##3.5 haiku no esta disponible on demand
@@ -105,17 +107,6 @@ model_kwargs = {
 inference_profile1="us.anthropic.claude-3-5-haiku-20241022-v1:0"
 inference_profile="us.anthropic.claude-3-haiku-20240307-v1:0"
 
-<<<<<<< HEAD
-
-
-inference_profile3_5claudehaiku="us.anthropic.claude-3-5-haiku-20241022-v1:0"
-inference_profile3claudehaiku="us.anthropic.claude-3-haiku-20240307-v1:0"
-inference_profile3_5Sonnet="us.anthropic.claude-3-5-sonnet-20240620-v1:0"
-inference_profile3_7Sonnet="us.anthropic.claude-3-7-sonnet-20250219-v1:0"
-
-
-=======
->>>>>>> d37e2e98de113bb9c9bd42e244ab5f7b914ae5bb
 # us.meta.llama3-2-11b-instruct-v1:0
 
 model_kwargs2 = {
@@ -125,11 +116,7 @@ model_kwargs2 = {
 # Generador de respuesta ChatBedrock:
 llmClaude = ChatBedrock(
     client=bedrock_runtime,
-<<<<<<< HEAD
-    model_id=inference_profile3_7Sonnet,
-=======
     model_id=inference_profile,
->>>>>>> d37e2e98de113bb9c9bd42e244ab5f7b914ae5bb
     model_kwargs=model_kwargs,
 )
 
@@ -156,13 +143,13 @@ def generar_configuracion_retriever_new():
     }
 
     # Aplicar filtro solo si hay centros de costos activos
-    if activas:
-        config["vectorSearchConfiguration"]["filter"] = {
-            "in": {
-                "key": "codigo_area",
-                "value": activas
-            }
-        }
+   # if activas:
+   #     config["vectorSearchConfiguration"]["filter"] = {
+   #         "in": {
+   #             "key": "codigo_area",
+   #             "value": activas
+   #         }
+   #     }
 
     #print(config)
 
@@ -324,7 +311,7 @@ def invoke_with_retriesnew(chain, prompt, history, config, max_retries=10):
                 warning_placeholder.markdown("⌛ Esperando generación de respuesta...")
             print(f"Error en reintento {attempt}: {str(e)}")
             if attempt == max_retries:
-                warning_placeholder.markdown("⚠️ No fue posible generar la respuesta.  Por favor, vuelve a introducir tu pregunta.")
+                warning_placeholder.markdown("⚠️ No fue posible generar la respuesta.")
 
         except Exception as e:
             attempt += 1
@@ -332,7 +319,7 @@ def invoke_with_retriesnew(chain, prompt, history, config, max_retries=10):
                 warning_placeholder.markdown("⌛ Esperando generación de respuesta...")
             print(f"Error inesperado en reintento {attempt}: {str(e)}")
             if attempt == max_retries:
-                warning_placeholder.markdown("⚠️ No fue posible generar la respuesta.  Por favor, vuelve a introducir tu pregunta.")
+                warning_placeholder.markdown("⚠️ No fue posible generar la respuesta.")
 
 
 feedback_option = "faces"  # Puede cambiarse a "thumbs" si se requiere
@@ -364,64 +351,19 @@ def main():
 
     #### El session_id es lo que chat se le cargará al usuario
     query_params = st.query_params  # Para versiones recientes
-    user_id =  query_params.get("user_id", "") #"langsmithfeedbackprueba@gmail.com"  #query_params.get("user_id", "")
-    persona_id =  query_params.get("id_persona", "")#"101964"
-    servidor = query_params.get("url_request","") #"C"  
+ #   user_id =  query_params.get("user_id", "") #"langsmithfeedbackprueba@gmail.com"  #query_params.get("user_id", "")
+ #   persona_id =  query_params.get("id_persona", "")#"101964"
+ #   servidor = query_params.get("url_request","") #"C"  
+
+    session_id= "usuario_extraido4@prueba.com"
 
 
-    #st.write(user_id)
-    if user_id:
-        st.session_state.session_id =session_id = user_id  # Guardarlo en la sesión
-        st.session_state.persona_id = persona_id  # Guardarlo en la sesión
-        st.session_state.servidor = servidor
-
-<<<<<<< HEAD
-        st.success(f"UsuariOO: {st.session_state.session_id}")
-=======
-        st.success(f"Usuario: {st.session_state.session_id}")
->>>>>>> d37e2e98de113bb9c9bd42e244ab5f7b914ae5bb
-
-        api_url = "https://compras135.ufm.edu/repositorio_procesos_api.php"
-
-        if st.session_state.servidor == 'I':
-            api_url = "https://intranet.ufm.edu/repositorio_procesos_api.php"
+    st.write(session_id)
 
 
-        # Parámetros para el POST (form-data)
-        payload = {
-            "centroCostosPermisos": "1",
-            "id_persona": st.session_state.persona_id  # Se envía el ID de la persona desde la sesión
-        }
-         
 
-        # Encabezados para la solicitud (form-data usa `x-www-form-urlencoded`)
-        # Agregar más encabezados, importante, sino se tiene User-Agent da forbidden
-        headers = {
-            "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
-        }
-
-        # Hacer el POST automáticamente cuando hay un user_id
-        with st.spinner("Obteniendo centros de costos..."):
-            response = requests.post(api_url, data=payload, headers=headers)
 
   
-        if response.status_code == 200:
-            data = response.json()  # Convertir la respuesta en JSON
-
-            # Guardar el JSON completo de los permisos en `st.session_state`
-            st.session_state.centros_costos = data  
-
-        else:
-            st.error(f"⚠️ Acceso denegado: {response.status_code}")
-            st.text(response.text)  # Mostrar el error en texto si lo hay
-            st.stop()
-
-
-    else:
-
-        st.error("⚠️ Acceso denegado.")
-        st.stop()  # Detiene la ejecución de Streamlit
 
     
     history = DynamoDBChatMessageHistory(table_name=table_name, session_id=session_id)
@@ -436,7 +378,7 @@ def main():
     
     else:
         centros_texto = "No tienes áreas disponibles."
-        st.stop()
+       # st.stop()
 
 
     descripcion_chatbot = (
@@ -471,9 +413,13 @@ def main():
             role = "user" if msg.__class__.__name__ == "HumanMessage" else "assistant"
             st.session_state.messages.append({"role": role, "content": msg.content})
 
+  
+    
+    # I9HQYMMI4A completa
+    # con n8n, OWLYEEHPY5
 
     retriever = AmazonKnowledgeBasesRetriever(
-    knowledge_base_id= "OWLYEEHPY5", ##Antiguo: "I9HQYMMI4A",
+    knowledge_base_id="OWLYEEHPY5",
     retrieval_config=generar_configuracion_retriever_new()
     )
 
@@ -644,11 +590,7 @@ Si el usuario solicita ver un listado completo de los procesos de una unidad, re
         # Capturar el run_id con collect_runs()
         #with collect_runs() as cb:
         invoke_with_retriesnew(chain_with_history, prompt, st.session_state.messages, config)
-<<<<<<< HEAD
 
-=======
-########
->>>>>>> d37e2e98de113bb9c9bd42e244ab5f7b914ae5bb
             # Guardar el run_id generado en la respuesta del asistente
        #     if cb.traced_runs:
        #         run_id = cb.traced_runs[0].id

@@ -105,7 +105,6 @@ model_kwargs = {
 inference_profile1="us.anthropic.claude-3-5-haiku-20241022-v1:0"
 inference_profile="us.anthropic.claude-3-haiku-20240307-v1:0"
 
-<<<<<<< HEAD
 
 
 inference_profile3_5claudehaiku="us.anthropic.claude-3-5-haiku-20241022-v1:0"
@@ -114,8 +113,6 @@ inference_profile3_5Sonnet="us.anthropic.claude-3-5-sonnet-20240620-v1:0"
 inference_profile3_7Sonnet="us.anthropic.claude-3-7-sonnet-20250219-v1:0"
 
 
-=======
->>>>>>> d37e2e98de113bb9c9bd42e244ab5f7b914ae5bb
 # us.meta.llama3-2-11b-instruct-v1:0
 
 model_kwargs2 = {
@@ -125,11 +122,7 @@ model_kwargs2 = {
 # Generador de respuesta ChatBedrock:
 llmClaude = ChatBedrock(
     client=bedrock_runtime,
-<<<<<<< HEAD
     model_id=inference_profile3_7Sonnet,
-=======
-    model_id=inference_profile,
->>>>>>> d37e2e98de113bb9c9bd42e244ab5f7b914ae5bb
     model_kwargs=model_kwargs,
 )
 
@@ -375,11 +368,7 @@ def main():
         st.session_state.persona_id = persona_id  # Guardarlo en la sesión
         st.session_state.servidor = servidor
 
-<<<<<<< HEAD
         st.success(f"UsuariOO: {st.session_state.session_id}")
-=======
-        st.success(f"Usuario: {st.session_state.session_id}")
->>>>>>> d37e2e98de113bb9c9bd42e244ab5f7b914ae5bb
 
         api_url = "https://compras135.ufm.edu/repositorio_procesos_api.php"
 
@@ -644,11 +633,7 @@ Si el usuario solicita ver un listado completo de los procesos de una unidad, re
         # Capturar el run_id con collect_runs()
         #with collect_runs() as cb:
         invoke_with_retriesnew(chain_with_history, prompt, st.session_state.messages, config)
-<<<<<<< HEAD
 
-=======
-########
->>>>>>> d37e2e98de113bb9c9bd42e244ab5f7b914ae5bb
             # Guardar el run_id generado en la respuesta del asistente
        #     if cb.traced_runs:
        #         run_id = cb.traced_runs[0].id
