@@ -139,7 +139,7 @@ def generar_configuracion_retriever_new():
         activas = []  # Si no hay datos, la lista queda vacía
 
         
-    #print(activas)
+    print(activas)
 
     # Construir la configuración base
     config = {
@@ -149,15 +149,16 @@ def generar_configuracion_retriever_new():
     }
 
     # Aplicar filtro solo si hay centros de costos activos
+   
     if activas:
         config["vectorSearchConfiguration"]["filter"] = {
-            "in": {
+                "in": {
                 "key": "codigo_area",
                 "value": activas
             }
         }
 
-    #print(config)
+    print(config)
 
     return config
 
@@ -368,12 +369,16 @@ def main():
         st.session_state.persona_id = persona_id  # Guardarlo en la sesión
         st.session_state.servidor = servidor
 
-        st.success(f"UsuariOO: {st.session_state.session_id}")
+        st.success(f"Usuario: {st.session_state.session_id}")
 
         api_url = "https://compras135.ufm.edu/repositorio_procesos_api.php"
 
         if st.session_state.servidor == 'I':
             api_url = "https://intranet.ufm.edu/repositorio_procesos_api.php"
+
+        
+        if st.session_state.servidor == 'L':
+            api_url = "http://localhost/repositorio_procesos_api.php"
 
 
         # Parámetros para el POST (form-data)
@@ -432,8 +437,8 @@ def main():
     "\n"
     "Soy tu asistente sobre procesos de la UFM, ¿En qué puedo apoyarte?\n"
     "- Responder consultas sobre procesos específicos, guiándote paso a paso.\n"
-    "- Mostrarte una lista de procesos relacionados y ayudarte a encontrar el proceso adecuado.\n"
-    "- Proporcionarte enlaces directos a documentos y flujogramas relevantes.\n"
+    "- Mostrar una lista de procesos relacionados y ayudarte a encontrar el proceso adecuado.\n"
+    "- Proporcionar enlaces directos a documentos y flujogramas relevantes.\n"
     "- Aclarar dudas y solicitar más detalles para asegurar que obtengas la mejor respuesta posible.\n"
     "- Ofrecer información sobre tiempos estimados, participantes y aspectos clave de cada paso de un proceso.\n\n"
     "Mi misión es facilitarte el acceso a la información y guiarte a través de los procesos de la manera más eficiente posible.\n\n"

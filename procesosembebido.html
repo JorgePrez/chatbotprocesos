@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot Flotante Centrado - Full Ancho</title>
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        /* Bot�n flotante */
+        #btnChatbot {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 18px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Fondo oscuro cuando se abre el chatbot */
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 999;
+        }
+
+        /* Contenedor flotante del iframe (centrado, mas ancho) */
+        #chatbotContainer {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 90%; /* Ocupa casi toda la pantalla */
+            max-width: 1200px; /* Maximo ancho */
+            height: 550px; /* Se mantiene la altura original */
+            background: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+            display: none; /* Oculto por defecto */
+            z-index: 1000;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Estilos del iframe (ocupa todo el espacio disponible) */
+        #chatbotIframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Bot�n para cerrar */
+        #closeChatbot {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Boton para abrir el chatbot -->
+    <button id="btnChatbot">Chat</button>
+
+    <!-- Fondo oscuro cuando se abre el chatbot -->
+    <div id="overlay"></div>
+
+    <!-- Contenedor flotante del chatbot (centrado, ms ancho) -->
+    <div id="chatbotContainer">
+        <button id="closeChatbot">X</button>
+        <iframe id="chatbotIframe"></iframe>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnChatbot = document.getElementById("btnChatbot");
+            const chatbotContainer = document.getElementById("chatbotContainer");
+            const closeChatbot = document.getElementById("closeChatbot");
+            const overlay = document.getElementById("overlay");
+            const iframe = document.getElementById("chatbotIframe");
+
+            // Usuario dinmico (puedes obtenerlo de sesin o backend)
+            var session = "jpescobar2@ufm.edu"; // Esto debera ser dinmico
+            var urlRequest = "C";
+            var curso_impartido_id =127823;
+
+
+            //var chatbotUrlServidor = "https://procesoschatbot.ngrok.app/?user_id=" + encodeURIComponent(userId);
+
+
+            var titulo =  'Chatbot evaluaciones de curso impartido';
+
+        
+             //var chatbotUrl = "http://localhost:8501/?session=" + encodeURIComponent(session) + "&curso_impartido_id=" + encodeURIComponent(curso_impartido_id)+ "&titulo=" + encodeURIComponent(titulo) + "&servidor=" + encodeURIComponent(urlRequest);
+
+             var userId = 'otro2@ufm.edu'
+            var id_persona = "TD";
+            var urlRequest = "C"; 
+            urlRequest= "L"
+
+
+             var chatbotUrl = "http://localhost:8501/?user_id=" + encodeURIComponent(userId) + "&id_persona=" + encodeURIComponent(id_persona)+ "&url_request=" + encodeURIComponent(urlRequest);
+
+           //var chatbotUrl = "https://procesoschatbot.ngrok.dev/?user_id=" + encodeURIComponent(userId) + "&id_persona=" + encodeURIComponent(id_persona)+ "&url_request=" + encodeURIComponent(urlRequest);
+
+             
+
+
+
+
+
+            // Cargar el `iframe` antes de interactuar con el botn (mejor experiencia de usuario)
+            iframe.src = chatbotUrl;
+
+            // Mostrar el chatbot y el overlay al presionar el botn
+            btnChatbot.addEventListener("click", () => {
+                chatbotContainer.style.display = "block";
+                overlay.style.display = "block";
+            });
+
+            // Cerrar el chatbot y el overlay
+            closeChatbot.addEventListener("click", () => {
+                chatbotContainer.style.display = "none";
+                overlay.style.display = "none";
+            });
+
+            // Cerrar el chatbot si el usuario hace clic en el overlay
+            overlay.addEventListener("click", () => {
+                chatbotContainer.style.display = "none";
+                overlay.style.display = "none";
+            });
+        });
+    </script>
+
+</body>
+</html>

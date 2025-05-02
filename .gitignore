@@ -1,2 +1,8 @@
 *.yaml
 *.env
+hayek.py
+model_ia_autores.py
+dynamo_crud_autores.py
+sugerencias_preguntas.py
+__pycache__/*
+config/__pycache__/*

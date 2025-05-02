@@ -355,19 +355,20 @@ def main():
     unsafe_allow_html=True
 )
 
-   
+    #### El session_id es lo que chat se le cargará al usuario
     query_params = st.query_params  # Para versiones recientes
-    user_id =  query_params.get("user_id", "") 
-    persona_id =  query_params.get("id_persona", "")
-    servidor = query_params.get("url_request","")   
+    user_id =  query_params.get("user_id", "") #"langsmithfeedbackprueba@gmail.com"  #query_params.get("user_id", "")
+    persona_id =  query_params.get("id_persona", "")#"101964"
+    servidor = query_params.get("url_request","") #"C"  
 
 
+    #st.write(user_id)
     if user_id:
         st.session_state.session_id =session_id = user_id  # Guardarlo en la sesión
         st.session_state.persona_id = persona_id  # Guardarlo en la sesión
         st.session_state.servidor = servidor
 
-        st.success(f"Usuario: {st.session_state.session_id}")
+        st.success(f"UsuariOO: {st.session_state.session_id}")
 
         api_url = "https://compras135.ufm.edu/repositorio_procesos_api.php"
 
@@ -431,8 +432,8 @@ def main():
     "\n"
     "Soy tu asistente sobre procesos de la UFM, ¿En qué puedo apoyarte?\n"
     "- Responder consultas sobre procesos específicos, guiándote paso a paso.\n"
-    "- Mostrar una lista de procesos relacionados y ayudarte a encontrar el proceso adecuado.\n"
-    "- Proporcionar enlaces directos a documentos y flujogramas relevantes.\n"
+    "- Mostrarte una lista de procesos relacionados y ayudarte a encontrar el proceso adecuado.\n"
+    "- Proporcionarte enlaces directos a documentos y flujogramas relevantes.\n"
     "- Aclarar dudas y solicitar más detalles para asegurar que obtengas la mejor respuesta posible.\n"
     "- Ofrecer información sobre tiempos estimados, participantes y aspectos clave de cada paso de un proceso.\n\n"
     "Mi misión es facilitarte el acceso a la información y guiarte a través de los procesos de la manera más eficiente posible.\n\n"

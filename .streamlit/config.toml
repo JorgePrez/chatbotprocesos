@@ -1,5 +1,8 @@
 #[browser]
 #showSidebarNavigation = false  # Oculta el menú lateral (opcional), esto se hace por un 
+[client]
+showSidebarNavigation = false
+toolbarMode = "minimal"
 [server]
 enableXsrfProtection = false
 enableCORS = false

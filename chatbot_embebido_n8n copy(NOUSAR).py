@@ -355,13 +355,14 @@ def main():
     unsafe_allow_html=True
 )
 
-   
+    #### El session_id es lo que chat se le cargará al usuario
     query_params = st.query_params  # Para versiones recientes
-    user_id =  query_params.get("user_id", "") 
-    persona_id =  query_params.get("id_persona", "")
-    servidor = query_params.get("url_request","")   
+    user_id =  query_params.get("user_id", "") #"langsmithfeedbackprueba@gmail.com"  #query_params.get("user_id", "")
+    persona_id =  query_params.get("id_persona", "")#"101964"
+    servidor = query_params.get("url_request","") #"C"  
 
 
+    #st.write(user_id)
     if user_id:
         st.session_state.session_id =session_id = user_id  # Guardarlo en la sesión
         st.session_state.persona_id = persona_id  # Guardarlo en la sesión
