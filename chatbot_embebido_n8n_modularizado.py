@@ -4,6 +4,29 @@ import uuid
 from config.model_ia import run_procesos_chain 
 import requests
 
+from dotenv import load_dotenv
+from langsmith import traceable
+from langsmith import Client
+
+#from streamlit_feedback import streamlit_feedback
+
+from langsmith.run_helpers import get_current_run_tree
+
+from streamlit_feedback import streamlit_feedback
+
+from langchain.callbacks import collect_runs
+
+
+
+from langsmith.run_helpers import get_current_run_tree
+
+
+# Cargar variables de entorno
+load_dotenv()
+client = Client()
+
+
+
 
 def invoke_with_retries_procesos(run_chain_fn, question, history, config=None, max_retries=10):
     attempt = 0
