@@ -42,6 +42,10 @@ inference_profile3_5Sonnet="us.anthropic.claude-3-5-sonnet-20240620-v1:0"
 inference_profile3_7Sonnet="us.anthropic.claude-3-7-sonnet-20250219-v1:0"
 
 
+inference_profile3_7Sonnet="arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/tcsgx7nj4mf1"
+
+
+
 # Claude 3 Sonnet ID
 model = ChatBedrock(
     client=bedrock_runtime,
@@ -297,6 +301,7 @@ def run_procesos_chain(question, history, codigos_activos):
 
 
 
+inference_profile3_5Sonnet="arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/sc2jrj3crjn0"
 
 
 modelNames = ChatBedrock(

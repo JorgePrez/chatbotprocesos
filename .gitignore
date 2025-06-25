@@ -6,3 +6,4 @@ dynamo_crud_autores.py
 sugerencias_preguntas.py
 __pycache__/*
 config/__pycache__/*
+otros*

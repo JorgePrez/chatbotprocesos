@@ -25,6 +25,11 @@ from langsmith.run_helpers import get_current_run_tree
 load_dotenv()
 client = Client()
 
+import os
+# Healthcheck endpoint simulado
+if st.query_params.get("check") == "1":
+    st.markdown("OK")
+    st.stop()
 
 
 
