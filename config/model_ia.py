@@ -51,6 +51,8 @@ model = ChatBedrock(
     client=bedrock_runtime,
     model_id=inference_profile3_7Sonnet,
     model_kwargs=model_kwargs,
+    provider="anthropic"  
+
    # streaming=True
 )
 
@@ -308,6 +310,7 @@ modelNames = ChatBedrock(
     client=bedrock_runtime,
     model_id=inference_profile3_5Sonnet,
     model_kwargs=model_kwargs,
+    provider="anthropic"  
 )
 
 
