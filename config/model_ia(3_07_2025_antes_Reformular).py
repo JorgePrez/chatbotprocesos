@@ -69,9 +69,6 @@ SYSTEM_PROMPT_PROCESOS = (f"""
 
 ## Instrucciones:
 
-Importante sobre el formato:
-No utilices encabezados Markdown como `#`, `##`, `###`, ni títulos grandes. Todo el texto debe tener el mismo tamaño. Puedes usar listas numeradas o viñetas y aplicar negritas simples si es necesario, pero sin cambiar el tamaño del texto ni generar encabezados destacados.
-
 **Rol**: 
 Adquiere el rol de un informador con conocimientos de metodología de procesos y con gran oratoria para poder explicarlos de manera sencilla y clara. Estos procesos corresponden a la Universidad Francisco Marroquín de Guatemala, Panamá y Madrid. Quiero que hagas preguntas al usuario para que mejore la forma en la que te solicita la información y no te centres en responder inmediatamente, si hay información que pueda estar en varias partes de la documentación que te hemos agregado. No vas a buscar la información a internet, esto desvirtuaría los procesos que hemos creado.
 
@@ -207,73 +204,6 @@ def generar_configuracion_retriever(codigos_activos: list) -> dict:
 
     return config
 
-from langchain.prompts import PromptTemplate
-from langchain_core.runnables import RunnableLambda
-
-
-
-
-#REFORMULATE_WITH_HISTORY_PROMPT = PromptTemplate.from_template(
-#    "Historial de conversación:\n{history}\n\nPregunta actual del usuario: {question}\n\nReformula el input del usuario para que sea claro, completo y con contexto:"
-#)
-
-
-REFORMULATE_WITH_HISTORY_PROMPT2 = PromptTemplate.from_template("""
-Actúa como un reformulador de preguntas para un asistente especializado en procesos administrativos de la UFM.
-
-Tu tarea es transformar la última pregunta del usuario en una versión clara, autosuficiente y específica, adecuada para buscar en una base de conocimientos estructurada por procesos, cada uno con un código como "UFM-ADM-009" y un nombre como "Visitas de colegios a UFM".
-                                                               
-Toma en cuenta el historial completo del chat:
-- Si el usuario Responde con “Sí”, “Ajá” o “Correcto” luego de una sugerencia, reformula incluyendo el código y nombre del proceso sugerido.
-- Si el usuario hace referencia a la posición de un ítem en una lista (ej: “el tercero”, “el último”, “ese”), identifica de qué proceso se trata y usa su nombre y código.
-- Si el usuario da una palabra ambigua como “compras” , convierte eso en una consulta completa (ej: “Estoy buscando un proceso relacionado con compras...”).
-- Si la pregunta o el input del usuario es lo suficientemente claro, simplemente repítelo tal como está.
-
-Responde solo con la pregunta o input reformulado, sin ninguna explicación.
-
-Historial del chat:
-{history}
-
-Última pregunta o input del usuario:
-{question}
-
-Pregunta o input reformulado:
-""")
-
-
-
-REFORMULATE_WITH_HISTORY_PROMPT = PromptTemplate.from_template("""
-Actúa como un reformulador de preguntas para un asistente especializado en procesos administrativos de la UFM.
-
-Tu tarea es transformar la última pregunta del usuario en una versión clara, autosuficiente y específica, adecuada para buscar en una base de conocimientos estructurada por procesos, cada uno con un código como "UFM-ADM-009" y un nombre como "Visitas de colegios a UFM".
-                                                               
-Toma en cuenta el historial completo del chat:
-- Si el usuario Responde con “Sí”, “Ajá” o “Correcto” luego de una sugerencia, reformula incluyendo el código y nombre del proceso sugerido.
-- Si el usuario hace referencia a la posición de un ítem en una lista (ej: “el tercero”, “el último”, “ese”), identifica de qué proceso se trata y usa su nombre y código.
-- Si el usuario da una palabra ambigua como “compras” , convierte eso en una consulta completa (ej: “Estoy buscando un proceso relacionado con compras...”).
-- Si la pregunta o el input del usuario es lo suficientemente clara, simplemente repítela tal como está.
-                                                               
-
-Reglas adicionales:
-- No inventes nombres ni códigos de procesos. Solo incluye nombres o códigos si ya han sido mencionados anteriormente en la conversación.
-- Reformula de modo que la pregunta esté alineada con el formato de los procesos (nombre y código, si están disponibles).
-
-Responde solo con la pregunta o input reformulado, sin ninguna explicación.
-
-Historial del chat:
-{history}
-
-Última pregunta o input del usuario:
-{question}
-
-Pregunta o input reformulado:
-""")
-
-# Cadena de reformulación (usa el mismo modelo principal)
-reformulate_chain = REFORMULATE_WITH_HISTORY_PROMPT | model | StrOutputParser()
-
-
-
 def build_procesos_chain(codigos_activos: list):
     retriever = AmazonKnowledgeBasesRetriever(
         knowledge_base_id=BASE_CONOCIMIENTOS_PROCESOS,
@@ -297,25 +227,8 @@ def build_procesos_chain(codigos_activos: list):
 def run_procesos_chain(question, history, codigos_activos):
     ##print(codigos_activos) Centros de costos activos para debuggear
     chain = build_procesos_chain(codigos_activos)
-
-    
-    reformulated_question = reformulate_chain.invoke({
-    "question": question,
-    "history": history  
-    })
-
-
-##    print("\n==============================")
-##    print("🔹 Pregunta original del usuario:")
-##   print(question)
-##    print("------------------------------")
-##    print("🔄 Pregunta reformulada por el sistema:")
-##    print(reformulated_question)
-##    print("==============================\n")
-
-
     inputs = {
-        "question": reformulated_question,
+        "question": question,
         "historial": history
     }
     return chain.stream(inputs)

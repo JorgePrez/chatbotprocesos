@@ -13,6 +13,10 @@ from botocore.exceptions import NoCredentialsError
 import botocore
 #from langchain.callbacks.tracers.run_collector import collect_runs
 from langchain.callbacks import collect_runs
+from langchain.schema import Document
+from collections import defaultdict
+from langchain_core.runnables import RunnableLambda
+
 
 
 
@@ -47,7 +51,7 @@ model = ChatBedrock(
     client=bedrock_runtime,
     model_id=inference_profile3_7Sonnet,
     model_kwargs=model_kwargs,
-        provider="anthropic"  
+    provider="anthropic"  
 
    # streaming=True
 )
@@ -68,7 +72,7 @@ SYSTEM_PROMPT_PROCESOS = (f"""
                      
 
 ## Instrucciones:
-
+                          
 Importante sobre el formato:
 No utilices encabezados Markdown como `#`, `##`, `###`, ni títulos grandes. Todo el texto debe tener el mismo tamaño. Puedes usar listas numeradas o viñetas y aplicar negritas simples si es necesario, pero sin cambiar el tamaño del texto ni generar encabezados destacados.
 
@@ -207,72 +211,65 @@ def generar_configuracion_retriever(codigos_activos: list) -> dict:
 
     return config
 
-from langchain.prompts import PromptTemplate
-from langchain_core.runnables import RunnableLambda
 
 
 
+# Función para recuperar y depurar el contexto
+def obtener_contexto(inputs, retriever):
+    """
+    Función que recibe un retriever como parámetro para obtener los documentos relevantes.
+    """
+    question = inputs["question"]  # Extraer la pregunta
+    documentos = retriever.invoke(question)  # Obtener documentos relevantes
 
-#REFORMULATE_WITH_HISTORY_PROMPT = PromptTemplate.from_template(
-#    "Historial de conversación:\n{history}\n\nPregunta actual del usuario: {question}\n\nReformula el input del usuario para que sea claro, completo y con contexto:"
-#)
+    # Diccionario para agrupar contenido por 'identificador_proceso'
+    procesos_agrupados = defaultdict(list)
 
+    # Iterar sobre los documentos recuperados
+    for doc in documentos:
+        # Extraer los metadatos y el identificador
+        source_metadata = doc.metadata.get('source_metadata', {})
+        identificador = source_metadata.get('identificador_proceso', 'Sin ID')
 
-REFORMULATE_WITH_HISTORY_PROMPT2 = PromptTemplate.from_template("""
-Actúa como un reformulador de preguntas para un asistente especializado en procesos administrativos de la UFM.
+        # Agrupar el contenido del documento bajo el mismo identificador
+        procesos_agrupados[identificador].append(doc.page_content)
 
-Tu tarea es transformar la última pregunta del usuario en una versión clara, autosuficiente y específica, adecuada para buscar en una base de conocimientos estructurada por procesos, cada uno con un código como "UFM-ADM-009" y un nombre como "Visitas de colegios a UFM".
-                                                               
-Toma en cuenta el historial completo del chat:
-- Si el usuario Responde con “Sí”, “Ajá” o “Correcto” luego de una sugerencia, reformula incluyendo el código y nombre del proceso sugerido.
-- Si el usuario hace referencia a la posición de un ítem en una lista (ej: “el tercero”, “el último”, “ese”), identifica de qué proceso se trata y usa su nombre y código.
-- Si el usuario da una palabra ambigua como “compras” , convierte eso en una consulta completa (ej: “Estoy buscando un proceso relacionado con compras...”).
-- Si la pregunta o el input del usuario es lo suficientemente claro, simplemente repítelo tal como está.
+    # Crear una nueva lista de Documentos con contenido concatenado por identificador_proceso
+    documentos_concatenados = []
+    for identificador, contenidos in procesos_agrupados.items():
+        # Concatenar los contenidos
+        contenido_concatenado = "\n".join(contenidos)
 
-Responde solo con la pregunta o input reformulado, sin ninguna explicación.
+        # Tomar los metadatos y el score del primer documento con este identificador
+        doc_base = next(
+            (doc for doc in documentos if doc.metadata.get('source_metadata', {}).get('identificador_proceso') == identificador),
+            None
+        )
 
-Historial del chat:
-{history}
+        if doc_base:
+            metadatos_base = doc_base.metadata  # Metadatos del primer documento
+            score_base = doc_base.metadata.get('score', 0)  # Score del primer documento
+        else:
+            metadatos_base = {}
+            score_base = 0
 
-Última pregunta o input del usuario:
-{question}
+        # Incluir el score en los metadatos base
+        metadatos_base['score'] = score_base
 
-Pregunta o input reformulado:
-""")
+        # Crear un nuevo objeto Document con el contenido concatenado
+        documento_concatenado = Document(
+            metadata=metadatos_base,
+            page_content=contenido_concatenado
+        )
 
+        # Agregar el documento a la lista final
+        documentos_concatenados.append(documento_concatenado)
 
-
-REFORMULATE_WITH_HISTORY_PROMPT = PromptTemplate.from_template("""
-Actúa como un reformulador de preguntas para un asistente especializado en procesos administrativos de la UFM.
-
-Tu tarea es transformar la última pregunta del usuario en una versión clara, autosuficiente y específica, adecuada para buscar en una base de conocimientos estructurada por procesos, cada uno con un código como "UFM-ADM-009" y un nombre como "Visitas de colegios a UFM".
-                                                               
-Toma en cuenta el historial completo del chat:
-- Si el usuario Responde con “Sí”, “Ajá” o “Correcto” luego de una sugerencia, reformula incluyendo el código y nombre del proceso sugerido.
-- Si el usuario hace referencia a la posición de un ítem en una lista (ej: “el tercero”, “el último”, “ese”), identifica de qué proceso se trata y usa su nombre y código.
-- Si el usuario da una palabra ambigua como “compras” , convierte eso en una consulta completa (ej: “Estoy buscando un proceso relacionado con compras...”).
-- Si la pregunta o el input del usuario es lo suficientemente clara, simplemente repítela tal como está.
-                                                               
-
-Reglas adicionales:
-- No inventes nombres ni códigos de procesos. Solo incluye nombres o códigos si ya han sido mencionados anteriormente en la conversación.
-- Reformula de modo que la pregunta esté alineada con el formato de los procesos (nombre y código, si están disponibles).
-
-Responde solo con la pregunta o input reformulado, sin ninguna explicación.
-
-Historial del chat:
-{history}
-
-Última pregunta o input del usuario:
-{question}
-
-Pregunta o input reformulado:
-""")
-
-# Cadena de reformulación (usa el mismo modelo principal)
-reformulate_chain = REFORMULATE_WITH_HISTORY_PROMPT | model | StrOutputParser()
+    return documentos_concatenados  # Devolver los documentos concatenados
 
 
+def crear_context_pipeline(retriever):
+    return RunnableLambda(lambda inputs: obtener_contexto(inputs, retriever))
 
 def build_procesos_chain(codigos_activos: list):
     retriever = AmazonKnowledgeBasesRetriever(
@@ -282,9 +279,10 @@ def build_procesos_chain(codigos_activos: list):
 
     prompt_template = create_prompt_template_procesos()
 
+
     chain = (
         RunnableParallel({
-            "context": itemgetter("question") | retriever,
+            "context": crear_context_pipeline(retriever),
             "question": itemgetter("question"),
             "historial": itemgetter("historial"),
         })
@@ -297,28 +295,12 @@ def build_procesos_chain(codigos_activos: list):
 def run_procesos_chain(question, history, codigos_activos):
     ##print(codigos_activos) Centros de costos activos para debuggear
     chain = build_procesos_chain(codigos_activos)
-
-    
-    reformulated_question = reformulate_chain.invoke({
-    "question": question,
-    "history": history  
-    })
-
-
-##    print("\n==============================")
-##    print("🔹 Pregunta original del usuario:")
-##   print(question)
-##    print("------------------------------")
-##    print("🔄 Pregunta reformulada por el sistema:")
-##    print(reformulated_question)
-##    print("==============================\n")
-
-
     inputs = {
-        "question": reformulated_question,
+        "question": question,
         "historial": history
     }
     return chain.stream(inputs)
+
 
 
 inference_profile3_5Sonnet="arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/sc2jrj3crjn0"

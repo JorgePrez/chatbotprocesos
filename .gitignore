@@ -7,3 +7,4 @@ sugerencias_preguntas.py
 __pycache__/*
 config/__pycache__/*
 otros*
+config/model_ia_*
