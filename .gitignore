@@ -8,3 +8,5 @@ __pycache__/*
 config/__pycache__/*
 otros*
 config/model_ia_*
+config/haciendo_insert.py
+others

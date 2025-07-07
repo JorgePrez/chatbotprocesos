@@ -145,6 +145,11 @@ def main():
             codigos_activos = [ item["CODIGO"] for item in st.session_state.centros_costos if item.get("ACTIVO") == "Y"]
             centros_activos = [item["NOMBRE_MOSTRAR"] for item in st.session_state.centros_costos if item["ACTIVO"] == "Y"]
             centros_texto = "\n".join([f"- {nombre}" for nombre in centros_activos]) if centros_activos else "No tienes áreas disponibles."
+
+
+            if not codigos_activos:
+                st.error("⚠️ No tienes áreas disponibles .")
+                st.stop()
         
     else:
             centros_texto = "No tienes áreas disponibles."
