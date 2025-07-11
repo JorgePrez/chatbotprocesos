@@ -179,21 +179,30 @@ def create_prompt_template_procesos():
     )
 
 # Base de conocimiento en Bedrock
-BASE_CONOCIMIENTOS_PROCESOS = "OWLYEEHPY5"
+BASE_CONOCIMIENTOS_PROCESOS = "OBWA2AMNUJ"
 
-retriever = AmazonKnowledgeBasesRetriever(
-    knowledge_base_id=BASE_CONOCIMIENTOS_PROCESOS,
-    retrieval_config={"vectorSearchConfiguration": {"numberOfResults": 100}},
-
-
-)
+#retriever = AmazonKnowledgeBasesRetriever(
+#    knowledge_base_id=BASE_CONOCIMIENTOS_PROCESOS,
+#    retrieval_config={"vectorSearchConfiguration": {"numberOfResults": 100}},
 
 
+# ARN DE MODELOS RERANKING:
+#  "modelArn": "arn:aws:bedrock:us-west-2::foundation-model/amazon.rerank-v1:0"
+# "modelArn": "arn:aws:bedrock:us-west-2::foundation-model/cohere.rerank-v3-5:0",
 
 def generar_configuracion_retriever(codigos_activos: list) -> dict:
     config = {
         "vectorSearchConfiguration": {
-            "numberOfResults": 100
+            "numberOfResults": 100,
+                  "rerankingConfiguration": {
+                "bedrockRerankingConfiguration": {
+                    "modelConfiguration": {
+                        "modelArn": "arn:aws:bedrock:us-west-2::foundation-model/cohere.rerank-v3-5:0",
+                    },
+                    "numberOfRerankedResults": 20
+                },
+                "type": "BEDROCK_RERANKING_MODEL"
+            }
         }
     }
 
@@ -276,6 +285,7 @@ reformulate_chain = REFORMULATE_WITH_HISTORY_PROMPT | model | StrOutputParser()
 
 def build_procesos_chain(codigos_activos: list):
     retriever = AmazonKnowledgeBasesRetriever(
+        region_name="us-west-2",
         knowledge_base_id=BASE_CONOCIMIENTOS_PROCESOS,
         retrieval_config=generar_configuracion_retriever(codigos_activos)
     )
