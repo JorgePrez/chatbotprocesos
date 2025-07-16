@@ -265,21 +265,7 @@ def main():
             ##st.info(descripcion_chatbot_centro_costos) 
             st.info(f"Puedes consultar procesos de las siguientes áreas:\n{centros_texto}")
                         
-            components.html("""
-            <script>
-            setTimeout(function() {
-            const scroller = document.querySelector('[data-testid="stAppScrollToBottomContainer"]');
-            if (scroller) {
-                scroller.scrollTop = 0;
-                console.log("Scroll ajustado hacia arriba");
-            } else {
-                console.log("No se encontró el contenedor de scroll");
-            }
-            }, 100);
-            </script>
-            """, height=0)
     
-
 
 
         for message in st.session_state.messages_procesos:
