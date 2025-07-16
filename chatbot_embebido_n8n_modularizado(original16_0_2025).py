@@ -17,9 +17,6 @@ from streamlit_feedback import streamlit_feedback
 from langchain.callbacks import collect_runs
 
 
-from streamlit.components.v1 import html
-
-import streamlit.components.v1 as components
 
 
 
@@ -262,33 +259,14 @@ def main():
     if st.session_state.new_chat_procesos:
 
         if not st.session_state.messages_procesos:
-            ##st.info(descripcion_chatbot_centro_costos) 
-            st.info(f"Puedes consultar procesos de las siguientes áreas:\n{centros_texto}")
-                        
-            components.html("""
-            <script>
-            setTimeout(function() {
-            const scroller = document.querySelector('[data-testid="stAppScrollToBottomContainer"]');
-            if (scroller) {
-                scroller.scrollTop = 0;
-                console.log("Scroll ajustado hacia arriba");
-            } else {
-                console.log("No se encontró el contenedor de scroll");
-            }
-            }, 100);
-            </script>
-            """, height=0)
-    
-
-
+            st.info(descripcion_chatbot_centro_costos) 
+            ##st.info(f"Puedes consultar procesos de las siguientes áreas:\n{centros_texto}")
 
         for message in st.session_state.messages_procesos:
             with st.chat_message(message["role"]):
                 st.markdown(message["content"])
 
         prompt = st.chat_input("Puedes escribir aquí...")
-
-        
 
         if prompt:
             st.session_state.messages_procesos.append({"role": "user", "content": prompt})
@@ -297,12 +275,10 @@ def main():
 
            # invoke_with_retries_procesos(run_procesos_chain, prompt, st.session_state.messages_procesos)
             invoke_with_retries_procesos(
-                lambda q, h: run_procesos_chain(q, h, codigos_activos),
-                prompt,
-                st.session_state.messages_procesos
-            )
-
-       
+    lambda q, h: run_procesos_chain(q, h, codigos_activos),
+    prompt,
+    st.session_state.messages_procesos
+)
 
     else:
         #st.info("Puedes crear o seleccionar un chat existente")
@@ -311,8 +287,6 @@ def main():
         st.divider()
         st.info(descripcion_chatbot)
         ##st.info(f"Puedes consultar procesos de las siguientes áreas:\n{centros_texto}")
-
-
 
 
 if __name__ == "__main__":

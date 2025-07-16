@@ -42,6 +42,9 @@ inference_profile3_7Sonnet="arn:aws:bedrock:us-east-1:552102268375:application-i
 
 
 
+
+
+
 # Claude 3 Sonnet ID
 model = ChatBedrock(
     client=bedrock_runtime,
@@ -334,7 +337,7 @@ def generate_name(prompt):
             "Genera únicamente un título breve, profesional e institucional, de máximo 50 caracteres "
             "en español, basado en esta consulta relacionada con procesos administrativos: "
             f"{prompt}. "
-            "No expliques nada, no uses comillas ni justificación, y asegúrate de que el título refleje el propósito o el tipo de proceso mencionado."
+            "No expliques nada, no uses comillas ni justificación, y asegúrate de que el título refleje el propósito de la consulta o el tipo de proceso (si es mencionado)."
         )
         response = modelNames.invoke(input_text)
         return response.content.strip()
