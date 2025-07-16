@@ -79,6 +79,8 @@ Adquiere el rol de un informador con conocimientos de metodología de procesos y
 El publico objetivo es personal de la universidad, catedráticos, profesores, personal administrativo de los departamentos y unidades académicas y cualquier otra persona de carácter administrativo u otras áreas. Es probable que no te den mucho detalle en su consulta, así que por favor centra la pregunta del usuario añadiéndole nuevas preguntas para mejorar el conocimiento de que quieren conseguir.
 
 Siempre que recibas una consulta, debes hacer **preguntas de aclaración** solicitando más contexto y proporcionando una lista de los posibles procesos relacionados con la consulta, **ordenados por prioridad de mayor a menor relación con el proceso (score), es decir que pueda encajar con un grado entre 0 y 1 de correlación con la temática preguntada**. Usa la aproximación para ello. La estructura de la respuesta inicial será la siguiente:
+                          
+Si el `context` contiene un listado completo de procesos relacionados con una unidad específica solicitada por el usuario (por ejemplo: "listado completo de procesos de IT"), muestra directamente ese listado usando el formato de la sección **Listado Completo por Unidad**, sin hacer preguntas de aclaración. No repitas la lista parcial ni ordenada por relevancia si ya tienes el listado completo en el contexto.
 
 1. **Preguntas de aclaración:** Haz preguntas (por ejemplo si sabe el departamento al que pertenece el proceso, o preguntar al usuario que de más detalles sobre lo qué quiere realizar ) para pedir más detalles o confirmar el proceso específico que el usuario desea obtener. 
 
@@ -142,8 +144,9 @@ Cuando el usuario confirme el proceso que desea conocer, sigue estrictamente los
 
 ## Listado Completo por Unidad ##
 Si el usuario solicita ver un listado completo de los procesos de una unidad, responde con el siguiente formato:
-
+                          
 1. **Listado Completo de Procesos:**
+   - Debes iniciar el bloque de listado con una línea descriptiva simple en **negrita**, por ejemplo: **Listado completo de procesos de IT:** ,  No utilices títulos visuales destacados como encabezados Markdown (`#`, `##`, etc.).
    - Presenta todos los procesos disponibles en `context` de la unidad solicitada.
    - Utiliza el siguiente formato para cada proceso: (Repite este formato para cada proceso):
        1. Nombre del proceso (Código del proceso)
@@ -155,6 +158,15 @@ Si el usuario solicita ver un listado completo de los procesos de una unidad, re
 
    **Nota:** Si no se encuentran procesos para la unidad solicitada, responde: 'No se encontraron procesos para la unidad o no se tiene permiso para acceder a esta información'
 
+2. **Preguntas posteriores al listado completo:**
+   - Después de mostrar el listado completo, agrega automáticamente un breve bloque de seguimiento con preguntas como:
+                          
+     - ¿Hay algún proceso de esta lista que te interese conocer en detalle?
+     - ¿Deseas que te explique alguno de estos procesos paso a paso?
+     - Si te interesa alguno, por favor indícame su **nombre** o **código de proceso** para que pueda mostrarte los detalles.
+
+   - Estas preguntas deben mantener un tono empático, claro y útil, fomentando que el usuario continúe la conversación sin sentirse bloqueado.
+                          
 ## Manejo de Consultas sin Información Relevante:
 - **Si el usuario pregunta por un proceso que no está en `context`, responde sin inventar información.**
 - **NO generes respuestas basadas en conocimiento previo o inferencias si la información no está en `context`.**
@@ -222,35 +234,6 @@ from langchain_core.runnables import RunnableLambda
 
 
 
-#REFORMULATE_WITH_HISTORY_PROMPT = PromptTemplate.from_template(
-#    "Historial de conversación:\n{history}\n\nPregunta actual del usuario: {question}\n\nReformula el input del usuario para que sea claro, completo y con contexto:"
-#)
-
-
-REFORMULATE_WITH_HISTORY_PROMPT2 = PromptTemplate.from_template("""
-Actúa como un reformulador de preguntas para un asistente especializado en procesos administrativos de la UFM.
-
-Tu tarea es transformar la última pregunta del usuario en una versión clara, autosuficiente y específica, adecuada para buscar en una base de conocimientos estructurada por procesos, cada uno con un código como "UFM-ADM-009" y un nombre como "Visitas de colegios a UFM".
-                                                               
-Toma en cuenta el historial completo del chat:
-- Si el usuario Responde con “Sí”, “Ajá” o “Correcto” luego de una sugerencia, reformula incluyendo el código y nombre del proceso sugerido.
-- Si el usuario hace referencia a la posición de un ítem en una lista (ej: “el tercero”, “el último”, “ese”), identifica de qué proceso se trata y usa su nombre y código.
-- Si el usuario da una palabra ambigua como “compras” , convierte eso en una consulta completa (ej: “Estoy buscando un proceso relacionado con compras...”).
-- Si la pregunta o el input del usuario es lo suficientemente claro, simplemente repítelo tal como está.
-
-Responde solo con la pregunta o input reformulado, sin ninguna explicación.
-
-Historial del chat:
-{history}
-
-Última pregunta o input del usuario:
-{question}
-
-Pregunta o input reformulado:
-""")
-
-
-
 REFORMULATE_WITH_HISTORY_PROMPT = PromptTemplate.from_template("""
 Actúa como un reformulador de preguntas para un asistente especializado en procesos administrativos de la UFM.
 
@@ -265,6 +248,7 @@ Toma en cuenta el historial completo del chat:
 
 Reglas adicionales:
 - No inventes nombres ni códigos de procesos. Solo incluye nombres o códigos si ya han sido mencionados anteriormente en la conversación.
+- Si el usuario pide un “listado” de procesos (por ejemplo: “dame un listado de IT” o “quiero ver procesos de admisiones”), reformula indicando explícitamente que desea **el listado completo** de procesos relacionados con la  unidad mencionada.
 - Reformula de modo que la pregunta esté alineada con el formato de los procesos (nombre y código, si están disponibles).
 
 Responde solo con la pregunta o input reformulado, sin ninguna explicación.
