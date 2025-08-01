@@ -12,9 +12,17 @@ from botocore.exceptions import NoCredentialsError
 
 import botocore
 #from langchain.callbacks.tracers.run_collector import collect_runs
-from langchain.callbacks import collect_runs
 
 
+
+IS_TESTING = False  # Cambiar a False para producción
+
+
+# ✅ Importar solo en producción
+if not IS_TESTING:
+    from langchain.callbacks import collect_runs
+
+session = boto3.Session(profile_name="testing" if IS_TESTING else None)
 
 
 bedrock_runtime = boto3.client(
@@ -30,30 +38,43 @@ model_kwargs = {
     "stop_sequences": ["\n\nHuman"],
 }
 
-
-
-inference_profile3_5claudehaiku="us.anthropic.claude-3-5-haiku-20241022-v1:0"
-inference_profile3claudehaiku="us.anthropic.claude-3-haiku-20240307-v1:0"
-inference_profile3_5Sonnet="us.anthropic.claude-3-5-sonnet-20240620-v1:0"
-inference_profile3_7Sonnet="us.anthropic.claude-3-7-sonnet-20250219-v1:0"
-
-
-inference_profile3_7Sonnet="arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/tcsgx7nj4mf1"
-
+# ✅ IDs de modelos según entorno
+if IS_TESTING:
+    model_id_3_7 = "us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+    model_id_3_5 = "us.anthropic.claude-3-5-sonnet-20240620-v1:0"
+else:
+    model_id_3_7 = "arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/hkqiiam51emk"
+    model_id_3_5 = "arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/yg7ijraub0q5"
 
 
 
-
-
-# Claude 3 Sonnet ID
+# ✅ Modelo Claude 3.7 Sonnet (para la chain principal)
 model = ChatBedrock(
     client=bedrock_runtime,
-    model_id=inference_profile3_7Sonnet,
+    model_id=model_id_3_7,
     model_kwargs=model_kwargs,
-        provider="anthropic"  
-
-   # streaming=True
+    provider="anthropic"
 )
+
+# ✅ Modelo Claude 3.5 Sonnet (para renombrar)
+modelNames = ChatBedrock(
+    client=bedrock_runtime,
+    model_id=model_id_3_5,
+    model_kwargs=model_kwargs,
+    provider="anthropic"
+)
+
+
+#inference_profile3_5claudehaiku="us.anthropic.claude-3-5-haiku-20241022-v1:0"
+#inference_profile3claudehaiku="us.anthropic.claude-3-haiku-20240307-v1:0"
+#inference_profile3_5Sonnet="us.anthropic.claude-3-5-sonnet-20240620-v1:0"
+#inference_profile3_7Sonnet="us.anthropic.claude-3-7-sonnet-20250219-v1:0"
+
+
+#inference_profile3_7Sonnet="arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/tcsgx7nj4mf1"
+
+
+
 
 
 ###########################################
@@ -193,17 +214,23 @@ def create_prompt_template_procesos():
         ]
     )
 
+
+def limpiar_metadata_retrieved(docs):
+    for doc in docs:
+        # 1. Limpiar metadata directa
+        #,"score"
+        for clave in ["x-amz-bedrock-kb-data-source-id", "x-amz-bedrock-kb-source-uri", "location", "type", "score"]:
+            doc.metadata.pop(clave, None)
+
+        # 2. Limpiar metadata anidada dentro de source_metadata
+        if "source_metadata" in doc.metadata:
+            for clave in ["x-amz-bedrock-kb-data-source-id", "x-amz-bedrock-kb-source-uri", "area", "codigo_area"]:
+                doc.metadata["source_metadata"].pop(clave, None)
+    return docs
+
 # Base de conocimiento en Bedrock
-BASE_CONOCIMIENTOS_PROCESOS = "OBWA2AMNUJ"
+BASE_CONOCIMIENTOS_PROCESOS = "JQW2MHWKBF" #"OBWA2AMNUJ" #JQW2MHWKBF
 
-#retriever = AmazonKnowledgeBasesRetriever(
-#    knowledge_base_id=BASE_CONOCIMIENTOS_PROCESOS,
-#    retrieval_config={"vectorSearchConfiguration": {"numberOfResults": 100}},
-
-
-# ARN DE MODELOS RERANKING:
-#  "modelArn": "arn:aws:bedrock:us-west-2::foundation-model/amazon.rerank-v1:0"
-# "modelArn": "arn:aws:bedrock:us-west-2::foundation-model/cohere.rerank-v3-5:0",
 
 def generar_configuracion_retriever(codigos_activos: list) -> dict:
     config = {
@@ -277,11 +304,14 @@ def build_procesos_chain(codigos_activos: list):
         retrieval_config=generar_configuracion_retriever(codigos_activos)
     )
 
+    filtered_retriever = retriever | RunnableLambda(limpiar_metadata_retrieved)
+
+
     prompt_template = create_prompt_template_procesos()
 
     chain = (
         RunnableParallel({
-            "context": itemgetter("question") | retriever,
+            "context": itemgetter("question") | filtered_retriever,
             "question": itemgetter("question"),
             "historial": itemgetter("historial"),
         })
@@ -318,15 +348,15 @@ def run_procesos_chain(question, history, codigos_activos):
     return chain.stream(inputs)
 
 
-inference_profile3_5Sonnet="arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/sc2jrj3crjn0"
+#inference_profile3_5Sonnet="arn:aws:bedrock:us-east-1:552102268375:application-inference-profile/sc2jrj3crjn0"
 
 
-modelNames = ChatBedrock(
-    client=bedrock_runtime,
-    model_id=inference_profile3_5Sonnet,
-    model_kwargs=model_kwargs,
-    provider="anthropic"  
-)
+#modelNames = ChatBedrock(
+#    client=bedrock_runtime,
+#    model_id=inference_profile3_5Sonnet,
+#    model_kwargs=model_kwargs,
+#    provider="anthropic"  
+#)
 
 
 
