@@ -224,7 +224,7 @@ def limpiar_metadata_retrieved(docs):
 
         # 2. Limpiar metadata anidada dentro de source_metadata
         if "source_metadata" in doc.metadata:
-            for clave in ["x-amz-bedrock-kb-data-source-id", "x-amz-bedrock-kb-source-uri", "area", "codigo_area"]:
+            for clave in ["x-amz-bedrock-kb-data-source-id", "x-amz-bedrock-kb-source-uri",  "codigo_area"]:
                 doc.metadata["source_metadata"].pop(clave, None)
     return docs
 
@@ -241,7 +241,18 @@ def generar_configuracion_retriever(codigos_activos: list) -> dict:
                     "modelConfiguration": {
                         "modelArn": "arn:aws:bedrock:us-west-2::foundation-model/cohere.rerank-v3-5:0",
                     },
-                    "numberOfRerankedResults": 20
+                    "numberOfRerankedResults": 20,
+                    "metadataConfiguration": {
+                    "selectionMode": "SELECTIVE",
+                    "selectiveModeConfiguration": {
+                            "fieldsToInclude": [
+                                    {"fieldName": "identificador_proceso"},
+                                    {"fieldName": "nombre_proceso"},
+                                    {"fieldName": "area"},
+
+                            ]
+                        }
+                    }
                 },
                 "type": "BEDROCK_RERANKING_MODEL"
             }
