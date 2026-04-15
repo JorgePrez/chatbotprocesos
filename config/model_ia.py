@@ -330,6 +330,7 @@ def generar_configuracion_retriever(codigos_activos: list) -> dict:
             }
         }
 
+   #print(f"Filtro base de conocimiento {codigos_activos}")
     return config
 
 from langchain.prompts import PromptTemplate

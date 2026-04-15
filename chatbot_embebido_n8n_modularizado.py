@@ -45,7 +45,7 @@ def invoke_with_retries_procesos(run_chain_fn, question, history, config=None, m
 
         while attempt < max_retries:
             try:
-                print(f"Reintento {attempt + 1} de {max_retries}")
+                #print(f"{attempt + 1} de {max_retries}")
                 full_response = ""
 
                 for chunk in run_chain_fn(question, history):
@@ -88,12 +88,16 @@ def main():
     user_id =  query_params.get("user_id", "") 
     persona_id =  query_params.get("id_persona", "")
     servidor = query_params.get("url_request","")   
+    tieneTD = query_params.get("tieneTD", "N")
+    tieneTC = query_params.get("tieneTC", "N")
 
 
     if user_id:
         st.session_state.username =session = user_id  # Guardarlo en la sesión 
         st.session_state.persona_id = persona_id  # Guardarlo en la sesión
         st.session_state.servidor = servidor
+        st.session_state.tieneTD = tieneTD
+        st.session_state.tieneTC = tieneTC
         st.sidebar.info(f"Usuario: {st.session_state.username}")
 
         api_url = "https://compras135.ufm.edu/repositorio_procesos_api.php"
@@ -108,7 +112,9 @@ def main():
         # Parámetros para el POST (form-data)
         payload = {
             "centroCostosPermisos": "1",
-            "id_persona": st.session_state.persona_id  # Se envía el ID de la persona desde la sesión
+            "id_persona": st.session_state.persona_id,  # Se envía el ID de la persona desde la sesión
+            "tieneTD": st.session_state.tieneTD,
+            "tieneTC": st.session_state.tieneTC
         }
          
 
@@ -120,7 +126,7 @@ def main():
         }
 
         # Hacer el POST automáticamente cuando hay un user_id
-        with st.spinner("Obteniendo centros de costos..."):
+        with st.spinner("Obteniendo permisos..."):
             response = requests.post(api_url, data=payload, headers=headers)
 
   
@@ -129,6 +135,7 @@ def main():
 
             # Guardar el JSON completo de los permisos en `st.session_state`
             st.session_state.centros_costos = data  
+            #st.json(data)
 
         else:
             st.error(f"⚠️ Acceso denegado: {response.status_code}")
