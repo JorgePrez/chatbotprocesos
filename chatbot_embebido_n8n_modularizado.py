@@ -1,7 +1,7 @@
 import streamlit as st
 import config.dynamo_crud as DynamoDatabase
 import uuid
-from config.model_ia_catching import run_procesos_chain 
+from config.model_iacatching import run_procesos_chain 
 import requests
 
 from dotenv import load_dotenv

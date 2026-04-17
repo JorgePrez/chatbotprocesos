@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 from datetime import datetime
 from boto3.dynamodb.conditions import Key, Attr
 #import config.model_ia as model  # Para usar model.generate_name
-import config.model_ia_catching as model  # Para usar model.generate_name
+import config.model_iacatching as model  # Para usar model.generate_name
 
 
 # Inicializar recurso de DynamoDB
