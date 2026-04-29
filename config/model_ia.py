@@ -17,7 +17,7 @@ import botocore
 import requests
 
 def get_models_for_chatbots(app: str, is_testing: bool) -> dict:
-    url = "https://miu.ufm.edu/intranet/repositorio_procesos_api.php"
+    url = "https://miu.ufm.edu/intranet/asistente_procesos_api.php"
 
     params = {
         "getModelsForChatbots": "true",
