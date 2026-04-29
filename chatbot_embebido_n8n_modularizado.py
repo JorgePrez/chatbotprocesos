@@ -105,7 +105,9 @@ def main():
         api_url = "https://compras135.ufm.edu/repositorio_procesos_api.php"
 
         if st.session_state.servidor == 'I':
-            api_url = "https://intranet.ufm.edu/repositorio_procesos_api.php"
+            #api_url = "https://intranet.ufm.edu/repositorio_procesos_api.php"
+            api_url="https://miu.ufm.edu/intranet/repositorio_procesos_api.php"
+
 
         if st.session_state.servidor == 'L':
             api_url = "http://localhost/repositorio_procesos_api.php"
