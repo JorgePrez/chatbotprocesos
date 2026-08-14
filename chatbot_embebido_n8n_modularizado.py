@@ -42,8 +42,10 @@ def fntObtenerAlcance(filtro, areas_admin, areas_acad):
     elif filtro == "ACAD":
         areas_seleccionadas = areas_acad
     else:
-        # Primero unidades académicas, luego administrativas
-        areas_seleccionadas = areas_acad + areas_admin
+        areas_seleccionadas = sorted(
+            areas_admin + areas_acad,
+            key=lambda item: (item.get("NOMBRE_MOSTRAR") or "").casefold()
+        )
 
     codigos = [item["CODIGO"] for item in areas_seleccionadas]
     nombres = [item["NOMBRE_MOSTRAR"] for item in areas_seleccionadas]
@@ -326,11 +328,11 @@ def main():
 
             filtro_seleccionado = st.radio(
                 "Alcance de búsqueda",
-                options=["TODO", "ADMIN", "ACAD"],
+                options=["TODO", "ACAD", "ADMIN"],
                 format_func=lambda opcion: {
                     "TODO": "Buscar en todo el repositorio",
-                    "ADMIN": "Buscar solo en unidades administrativas",
-                    "ACAD": "Buscar solo en unidades académicas"
+                    "ACAD": "Buscar solo en unidades académicas",
+                    "ADMIN": "Buscar solo en unidades administrativas"
                 }[opcion],
                 index=0,
                 key="selector_alcance_nuevo_chat"

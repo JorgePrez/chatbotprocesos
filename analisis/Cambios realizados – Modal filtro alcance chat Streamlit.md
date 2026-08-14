@@ -24,7 +24,7 @@ Calcula códigos y texto de áreas según el filtro:
 
 | Filtro | Resultado |
 |--------|-----------|
-| `TODO` | Académicas primero, luego administrativas |
+| `TODO` | Admin + académicas, **ordenadas alfabéticamente** por `NOMBRE_MOSTRAR` |
 | `ADMIN` | Solo áreas con `TIPO_ASOCIACION = CENTRO_COSTO` |
 | `ACAD` | Solo áreas con `TIPO_ASOCIACION = FACULTAD` |
 
@@ -96,8 +96,8 @@ Se muestra en el área principal (contenedor con borde) cuando hay ambos tipos d
 | Texto | Valor | Default |
 |-------|-------|---------|
 | Buscar en todo el repositorio | `TODO` | Sí |
-| Buscar solo en unidades administrativas | `ADMIN` | No |
 | Buscar solo en unidades académicas | `ACAD` | No |
+| Buscar solo en unidades administrativas | `ADMIN` | No |
 
 - Botón **Crear conversación**: confirma, crea el chat y entra a la conversación.
 - Botón **Cancelar**: cierra el panel sin crear chat.
@@ -132,7 +132,7 @@ Usa `areas_texto_chat` según el filtro elegido:
 
 - `ADMIN` → solo administrativas
 - `ACAD` → solo académicas
-- `TODO` → ambas (académicas primero, luego administrativas)
+- `TODO` → ambas, en orden alfabético
 
 Texto:
 
@@ -168,12 +168,15 @@ Al cargar un chat del historial:
 
 ---
 
-## 10. Orden al listar todas las áreas
+## 10. Orden de radios y listado de áreas
 
-Cuando el alcance es `TODO` (todas las áreas juntas), el orden es:
+### Radios del panel
+1. Buscar en todo el repositorio (`TODO`) — default
+2. Buscar solo en unidades académicas (`ACAD`)
+3. Buscar solo en unidades administrativas (`ADMIN`)
 
-1. Unidades académicas (`FACULTAD`)
-2. Unidades administrativas (`CENTRO_COSTO`)
+### Listado cuando el alcance es `TODO`
+Las áreas se ordenan alfabéticamente por `NOMBRE_MOSTRAR` (comparación case-insensitive con `casefold()`).
 
 ---
 
@@ -205,7 +208,7 @@ Usuario pulsa "Nuevo chat"
         └─ Chat abierto
               - Mensaje de áreas según filtro
               - Búsqueda con codigos_activos_chat
-              - Si TODO: académicas primero, luego administrativas
+              - Si TODO: áreas en orden alfabético
 ```
 
 ---
@@ -220,4 +223,5 @@ Usuario pulsa "Nuevo chat"
 - [x] La búsqueda de la conversación respeta el filtro.
 - [x] Si solo hay un tipo activo, no aparece el panel.
 - [x] Reabrir chat viejo sigue funcionando (alcance `TODO`).
-- [x] Con alcance `TODO`, salen primero académicas y luego administrativas.
+- [x] En los radios, académicas aparece antes que administrativas.
+- [x] Con alcance `TODO`, las áreas salen en orden alfabético.
