@@ -24,7 +24,7 @@ Calcula códigos y texto de áreas según el filtro:
 
 | Filtro | Resultado |
 |--------|-----------|
-| `TODO` | Admin + académicas, **ordenadas alfabéticamente** por `NOMBRE_MOSTRAR` |
+| `TODO` | Académicas primero, luego administrativas |
 | `ADMIN` | Solo áreas con `TIPO_ASOCIACION = CENTRO_COSTO` |
 | `ACAD` | Solo áreas con `TIPO_ASOCIACION = FACULTAD` |
 
@@ -132,7 +132,7 @@ Usa `areas_texto_chat` según el filtro elegido:
 
 - `ADMIN` → solo administrativas
 - `ACAD` → solo académicas
-- `TODO` → ambas, en orden alfabético
+- `TODO` → ambas (académicas primero, luego administrativas)
 
 Texto:
 
@@ -168,9 +168,12 @@ Al cargar un chat del historial:
 
 ---
 
-## 10. Orden alfabético
+## 10. Orden al listar todas las áreas
 
-Cuando el alcance es `TODO` (todas las áreas juntas), la lista se ordena alfabéticamente por `NOMBRE_MOSTRAR` (comparación case-insensitive con `casefold()`).
+Cuando el alcance es `TODO` (todas las áreas juntas), el orden es:
+
+1. Unidades académicas (`FACULTAD`)
+2. Unidades administrativas (`CENTRO_COSTO`)
 
 ---
 
@@ -202,7 +205,7 @@ Usuario pulsa "Nuevo chat"
         └─ Chat abierto
               - Mensaje de áreas según filtro
               - Búsqueda con codigos_activos_chat
-              - Si TODO: áreas en orden alfabético
+              - Si TODO: académicas primero, luego administrativas
 ```
 
 ---
@@ -217,4 +220,4 @@ Usuario pulsa "Nuevo chat"
 - [x] La búsqueda de la conversación respeta el filtro.
 - [x] Si solo hay un tipo activo, no aparece el panel.
 - [x] Reabrir chat viejo sigue funcionando (alcance `TODO`).
-- [x] Con alcance `TODO`, las áreas salen en orden alfabético.
+- [x] Con alcance `TODO`, salen primero académicas y luego administrativas.

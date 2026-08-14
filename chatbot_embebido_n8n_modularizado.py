@@ -42,10 +42,8 @@ def fntObtenerAlcance(filtro, areas_admin, areas_acad):
     elif filtro == "ACAD":
         areas_seleccionadas = areas_acad
     else:
-        areas_seleccionadas = sorted(
-            areas_admin + areas_acad,
-            key=lambda item: (item.get("NOMBRE_MOSTRAR") or "").casefold()
-        )
+        # Primero unidades académicas, luego administrativas
+        areas_seleccionadas = areas_acad + areas_admin
 
     codigos = [item["CODIGO"] for item in areas_seleccionadas]
     nombres = [item["NOMBRE_MOSTRAR"] for item in areas_seleccionadas]
