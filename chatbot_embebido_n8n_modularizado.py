@@ -36,6 +36,24 @@ if st.query_params.get("check") == "1":
     st.stop()
 
 
+def fntObtenerAlcance(filtro, areas_admin, areas_acad):
+    if filtro == "ADMIN":
+        areas_seleccionadas = areas_admin
+    elif filtro == "ACAD":
+        areas_seleccionadas = areas_acad
+    else:
+        areas_seleccionadas = sorted(
+            areas_admin + areas_acad,
+            key=lambda item: (item.get("NOMBRE_MOSTRAR") or "").casefold()
+        )
+
+    codigos = [item["CODIGO"] for item in areas_seleccionadas]
+    nombres = [item["NOMBRE_MOSTRAR"] for item in areas_seleccionadas]
+    areas_texto = "\n".join([f"- {nombre}" for nombre in nombres])
+
+    return codigos, areas_texto
+
+
 
 def invoke_with_retries_procesos(run_chain_fn, question, history, config=None, max_retries=10):
     attempt = 0
@@ -154,9 +172,12 @@ def main():
 
     if "centros_costos" in st.session_state and st.session_state.centros_costos:
             # Filtrar solo los centros que tienen "ACTIVO": "Y"
-            codigos_activos = [ item["CODIGO"] for item in st.session_state.centros_costos if item.get("ACTIVO") == "Y"]
-            centros_activos = [item["NOMBRE_MOSTRAR"] for item in st.session_state.centros_costos if item["ACTIVO"] == "Y"]
-            centros_texto = "\n".join([f"- {nombre}" for nombre in centros_activos]) if centros_activos else "No tienes áreas disponibles."
+            areas_activas = [item for item in st.session_state.centros_costos if item.get("ACTIVO") == "Y"]
+            areas_admin = [item for item in areas_activas if item.get("TIPO_ASOCIACION") == "CENTRO_COSTO"]
+            areas_acad = [item for item in areas_activas if item.get("TIPO_ASOCIACION") == "FACULTAD"]
+            tiene_admin = bool(areas_admin)
+            tiene_acad = bool(areas_acad)
+            codigos_activos, centros_texto = fntObtenerAlcance("TODO", areas_admin, areas_acad)
 
 
             if not codigos_activos:
@@ -210,6 +231,14 @@ def main():
         st.session_state.chat_id_procesos = ""
     if "new_chat_procesos" not in st.session_state:
         st.session_state.new_chat_procesos = False
+    if "pendiente_filtro_nuevo_chat" not in st.session_state:
+        st.session_state.pendiente_filtro_nuevo_chat = False
+    if "filtro_alcance" not in st.session_state:
+        st.session_state.filtro_alcance = "TODO"
+    if "codigos_activos_chat" not in st.session_state:
+        st.session_state.codigos_activos_chat = codigos_activos
+    if "areas_texto_chat" not in st.session_state:
+        st.session_state.areas_texto_chat = centros_texto
 
     def cleanChat():
         st.session_state.new_chat_procesos = False
@@ -221,14 +250,37 @@ def main():
         st.session_state.new_chat_procesos = True
         st.session_state.messages_procesos = chat
         st.session_state.chat_id_procesos = chat_id
+        st.session_state.pendiente_filtro_nuevo_chat = False
+        st.session_state.filtro_alcance = "TODO"
+        st.session_state.codigos_activos_chat, st.session_state.areas_texto_chat = fntObtenerAlcance(
+            "TODO", areas_admin, areas_acad
+        )
+
+    def crearChatNuevo(filtro):
+        codigos, areas_texto = fntObtenerAlcance(filtro, areas_admin, areas_acad)
+        st.session_state.filtro_alcance = filtro
+        st.session_state.codigos_activos_chat = codigos
+        st.session_state.areas_texto_chat = areas_texto
+        st.session_state.chat_id_procesos = str(uuid.uuid4())
+        DynamoDatabase.save(st.session_state.chat_id_procesos, session, "nuevo chat", [])
+        st.session_state.new_chat_procesos = True
+        st.session_state.messages_procesos = []
+        st.session_state.pendiente_filtro_nuevo_chat = False
 
     with st.sidebar:
 
         if st.button(mensaje_nuevo_chat, icon=":material/add:", use_container_width=True):
-            st.session_state.chat_id_procesos = str(uuid.uuid4())
-            DynamoDatabase.save(st.session_state.chat_id_procesos, session, "nuevo chat", [])
-            st.session_state.new_chat_procesos = True
             cleanMessages()
+            st.session_state.new_chat_procesos = False
+            st.session_state.chat_id_procesos = ""
+            st.session_state.selector_alcance_nuevo_chat = "TODO"
+
+            if tiene_admin and tiene_acad:
+                st.session_state.pendiente_filtro_nuevo_chat = True
+            elif tiene_admin:
+                crearChatNuevo("ADMIN")
+            elif tiene_acad:
+                crearChatNuevo("ACAD")
 
         datos = DynamoDatabase.getChats(session)
 
@@ -269,11 +321,40 @@ def main():
         else:
             st.caption("No tienes conversaciones guardadas.")
 
-    if st.session_state.new_chat_procesos:
+    if st.session_state.pendiente_filtro_nuevo_chat and tiene_admin and tiene_acad:
+        with st.container(border=True):
+            st.subheader("Selecciona el alcance de la búsqueda")
+            st.write("Puedes limitar la consulta a un tipo de unidad o buscar en todo el repositorio.")
+
+            filtro_seleccionado = st.radio(
+                "Alcance de búsqueda",
+                options=["TODO", "ADMIN", "ACAD"],
+                format_func=lambda opcion: {
+                    "TODO": "Buscar en todo el repositorio",
+                    "ADMIN": "Buscar solo en unidades administrativas",
+                    "ACAD": "Buscar solo en unidades académicas"
+                }[opcion],
+                index=0,
+                key="selector_alcance_nuevo_chat"
+            )
+
+            columna_crear, columna_cancelar = st.columns(2)
+
+            if columna_crear.button("Crear conversación", type="primary", use_container_width=True):
+                crearChatNuevo(filtro_seleccionado)
+                st.rerun()
+
+            if columna_cancelar.button("Cancelar", use_container_width=True):
+                st.session_state.pendiente_filtro_nuevo_chat = False
+                st.session_state.new_chat_procesos = False
+                st.session_state.chat_id_procesos = ""
+                st.rerun()
+
+    elif st.session_state.new_chat_procesos:
 
         if not st.session_state.messages_procesos:
             ##st.info(descripcion_chatbot_centro_costos) 
-            st.info(f"Puedes consultar procesos de las siguientes áreas:\n{centros_texto}")
+            st.info(f"Puedes consultar procesos de las siguientes áreas:\n{st.session_state.areas_texto_chat}")
                         
     
 
@@ -293,7 +374,7 @@ def main():
 
            # invoke_with_retries_procesos(run_procesos_chain, prompt, st.session_state.messages_procesos)
             invoke_with_retries_procesos(
-                lambda q, h: run_procesos_chain(q, h, codigos_activos),
+                lambda q, h: run_procesos_chain(q, h, st.session_state.codigos_activos_chat),
                 prompt,
                 st.session_state.messages_procesos
             )
