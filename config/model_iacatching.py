@@ -65,8 +65,11 @@ models = get_models_for_chatbots(app="PROCESOS", is_testing=IS_TESTING)
 
 #model_id_rename = 'global.anthropic.claude-haiku-4-5-20251001-v1:0'
 
-model_id_chat   = models["CHAT"]
-model_id_rename = models["RENAME"]
+model_id_chat   =   models["CHAT"]
+model_id_rename =   models["RENAME"]
+
+
+
 
 # print(model_id_chat)   # global.anthropic.claude-sonnet-4-5-20250929-v1:0
 # print(model_id_rename) # global.anthropic.claude-haiku-4-5-20251001-v1:0
@@ -85,10 +88,10 @@ model = ChatBedrockConverse(
     client=bedrock_runtime,
     model_id=model_id_chat,
     max_tokens=4096,
-    temperature=0.0,
-    additional_model_request_fields={
-        "top_k": 250
-    },    
+   #temperature=0.0,
+    #additional_model_request_fields={
+    #    "top_k": 250
+    #},    
     provider="anthropic",
     disable_streaming=False,
 )
