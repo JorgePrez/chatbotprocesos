@@ -3,8 +3,6 @@ import config.dynamo_crud as DynamoDatabase
 import uuid
 from config.model_iacatching import run_procesos_chain 
 import requests
-import base64
-import json
 
 from dotenv import load_dotenv
 from langsmith import traceable
@@ -36,32 +34,6 @@ import os
 if st.query_params.get("check") == "1":
     st.markdown("OK")
     st.stop()
-
-
-def fntDecodificarPayloadChatbot(payload_b64):
-    """Decodifica el query param p = base64 URL-safe(JSON) enviado por repositorio_procesos.php."""
-    if not payload_b64:
-        return {}
-
-    padding = "=" * (-len(payload_b64) % 4)
-    raw = base64.urlsafe_b64decode(payload_b64 + padding)
-    data = json.loads(raw.decode("utf-8"))
-    return data if isinstance(data, dict) else {}
-
-
-def fntObtenerUrlApi(servidor):
-    """
-    Decide la API según url_request:
-    - C = compras (pruebas)
-    - I = intranet (producción)
-    - L = localhost (pruebas locales)
-    """
-    if servidor == "I":
-        return "https://intranet.ufm.edu/repositorio_procesos_api.php"
-    if servidor == "L":
-        return "http://localhost/repositorio_procesos_api.php"
-    # Default / C = compras
-    return "https://compras135.ufm.edu/repositorio_procesos_api.php"
 
 
 def fntObtenerAlcance(filtro, areas_admin, areas_acad):
@@ -132,47 +104,38 @@ def invoke_with_retries_procesos(run_chain_fn, question, history, config=None, m
 
 def main():
 
-    query_params = st.query_params
-
-    # Formato actual de repositorio_procesos.php: ?p=<base64url(json)>
-    # Compatibilidad: también acepta user_id / id_persona / url_request sueltos
-    payload_b64 = query_params.get("p", "")
-    user_id = ""
-    persona_id = ""
-    servidor = ""
-
-    if payload_b64:
-        try:
-            data_payload = fntDecodificarPayloadChatbot(payload_b64)
-            user_id = data_payload.get("user_id", "") or ""
-            persona_id = data_payload.get("id_persona", "") or ""
-            servidor = data_payload.get("url_request", "") or ""
-        except Exception:
-            st.error("⚠️ Payload de acceso inválido.")
-            st.stop()
-    else:
-        user_id = query_params.get("user_id", "")
-        persona_id = query_params.get("id_persona", "")
-        servidor = query_params.get("url_request", "")
+    query_params = st.query_params  
+    user_id =  query_params.get("user_id", "") 
+    persona_id =  query_params.get("id_persona", "")
+    servidor = query_params.get("url_request","")   
+    tieneTD = query_params.get("tieneTD", "N")
+    tieneTC = query_params.get("tieneTC", "N")
 
 
     if user_id:
         st.session_state.username =session = user_id  # Guardarlo en la sesión 
         st.session_state.persona_id = persona_id  # Guardarlo en la sesión
         st.session_state.servidor = servidor
+        st.session_state.tieneTD = tieneTD
+        st.session_state.tieneTC = tieneTC
         st.sidebar.info(f"Usuario: {st.session_state.username}")
 
-        api_url = fntObtenerUrlApi(st.session_state.servidor)
-        api_token = os.getenv("REPOSITORIO_API_TOKEN", "").strip()
+        api_url = "https://compras135.ufm.edu/repositorio_procesos_api.php"
 
-        if not api_token:
-            st.error("⚠️ Falta REPOSITORIO_API_TOKEN en el archivo .env")
-            st.stop()
+        if st.session_state.servidor == 'I':
+            api_url="https://miu.ufm.edu/intranet/repositorio_procesos_api.php"
 
-        # La API calcula el alcance en servidor; no se envían tieneTD/tieneTC
+
+        if st.session_state.servidor == 'L':
+            api_url = "http://localhost/repositorio_procesos_api.php"
+
+
+        # Parámetros para el POST (form-data)
         payload = {
             "centroCostosPermisos": "1",
-            "id_persona": st.session_state.persona_id,
+            "id_persona": st.session_state.persona_id,  # Se envía el ID de la persona desde la sesión
+            "tieneTD": st.session_state.tieneTD,
+            "tieneTC": st.session_state.tieneTC
         }
          
 
@@ -180,8 +143,7 @@ def main():
         # Agregar más encabezados, importante, sino se tiene User-Agent da forbidden
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
-            "X-API-Token": api_token
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
         }
 
         # Hacer el POST automáticamente cuando hay un user_id
