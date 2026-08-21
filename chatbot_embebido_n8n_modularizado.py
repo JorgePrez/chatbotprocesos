@@ -186,11 +186,49 @@ def main():
 
         # Hacer el POST automáticamente cuando hay un user_id
         with st.spinner("Obteniendo permisos..."):
-            response = requests.post(api_url, data=payload, headers=headers)
+            try:
+                response = requests.post(
+                    api_url,
+                    data=payload,
+                    headers=headers,
+                    timeout=30
+                )
+            except requests.Timeout:
+                st.error("⚠️ Tiempo de espera agotado al consultar permisos.")
+                st.caption(f"API: {api_url}")
+                st.stop()
+            except requests.RequestException as e:
+                st.error("⚠️ No se pudo conectar con la API de permisos.")
+                st.caption(f"API: {api_url}")
+                st.text(str(e))
+                st.stop()
 
   
         if response.status_code == 200:
-            data = response.json()  # Convertir la respuesta en JSON
+            try:
+                data = response.json()
+            except ValueError:
+                st.error("⚠️ La API no devolvió JSON válido.")
+                st.caption(f"API: {api_url}")
+                st.text(response.text[:1000])
+                st.stop()
+
+            # Si la API responde error de negocio, no seguir como lista de áreas
+            if isinstance(data, dict) and data.get("error"):
+                st.error(f"⚠️ {data.get('error')}")
+                st.caption(f"API: {api_url}")
+                st.stop()
+
+            if isinstance(data, dict) and data.get("STATUS") == "ERROR":
+                st.error(f"⚠️ {data.get('ERROR', {}).get('MESSAGE', 'Error de API')}")
+                st.caption(f"API: {api_url}")
+                st.stop()
+
+            if not isinstance(data, list):
+                st.error("⚠️ Respuesta inesperada de la API de permisos.")
+                st.caption(f"API: {api_url}")
+                st.json(data)
+                st.stop()
 
             # Guardar el JSON completo de los permisos en `st.session_state`
             st.session_state.centros_costos = data  
@@ -198,6 +236,7 @@ def main():
 
         else:
             st.error(f"⚠️ Acceso denegado: {response.status_code}")
+            st.caption(f"API: {api_url}")
             st.text(response.text)  # Mostrar el error en texto si lo hay
             st.stop()
 
