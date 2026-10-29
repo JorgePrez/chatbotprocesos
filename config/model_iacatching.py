@@ -104,10 +104,15 @@ modelNames = ChatBedrockConverse(
     client=bedrock_runtime,
     model_id=model_id_rename,
     max_tokens=256,
-    temperature=0.0,
+    #temperature=0.0,
+    #additional_model_request_fields={
+    #    "top_k": 250
+    #},
     additional_model_request_fields={
-        "top_k": 250
-    },    
+        "thinking": {
+            "type": "disabled"
+        }
+        },     
     provider="anthropic"
 )
 
